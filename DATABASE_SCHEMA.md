@@ -145,4 +145,5 @@ Indeksi: `recipe_id`, `is_checked` (filter "što je ostalo za kupiti").
 ---
 
 Puna SQL migracija (CREATE TABLE + indeksi) je implementirana u
-`lib/core/database/migrations/migration_v1.dart`.
+`lib/core/database/migrations/migration_v1.dart`, a otvara je i primjenjuje
+`lib/core/database/database_helper.dart` (`DatabaseHelper`, singleton).
