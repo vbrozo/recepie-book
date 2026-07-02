@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/storage/image_storage_service.dart';
+import '../../models/ingredient.dart';
 import '../../models/recipe_with_details.dart';
 import '../../providers/image_storage_provider.dart';
 import '../../providers/recipe_list_provider.dart';
 import '../../providers/recipe_notifier.dart';
+import '../../providers/shopping_list_provider.dart';
 import '../../widgets/recipe_image_thumbnail.dart';
 
 class RecipeDetailScreen extends ConsumerWidget {
@@ -44,6 +46,13 @@ class RecipeDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(recipe.title),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add_shopping_cart_outlined),
+            tooltip: 'Dodaj sastojke u shopping listu',
+            onPressed: item.ingredients.isEmpty
+                ? null
+                : () => _addToShoppingList(context, ref, recipe.id, item!.ingredients),
+          ),
           IconButton(
             icon: Icon(
               recipe.isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -178,6 +187,23 @@ class RecipeDetailScreen extends ConsumerWidget {
     await imageStorage.deleteImages(imagePaths);
 
     if (context.mounted) context.pop();
+  }
+
+  Future<void> _addToShoppingList(
+    BuildContext context,
+    WidgetRef ref,
+    String recipeId,
+    List<Ingredient> ingredients,
+  ) async {
+    await ref.read(shoppingListProvider.notifier).addIngredientsFromRecipe(
+          recipeId: recipeId,
+          ingredients: ingredients,
+        );
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sastojci dodani u shopping listu.')),
+    );
   }
 }
 

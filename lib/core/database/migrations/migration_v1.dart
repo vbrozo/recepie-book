@@ -84,6 +84,7 @@ const List<String> migrationV1 = [
       name        TEXT NOT NULL,
       quantity    REAL,
       unit        TEXT,
+      category    TEXT,
       is_checked  INTEGER NOT NULL DEFAULT 0,
       recipe_id   TEXT REFERENCES recipes(id) ON DELETE SET NULL,
       created_at  TEXT NOT NULL,
@@ -101,4 +102,5 @@ const List<String> migrationV1 = [
   'CREATE INDEX idx_recipe_versions_recipe_id ON recipe_versions(recipe_id)',
   'CREATE INDEX idx_shopping_list_items_recipe_id ON shopping_list_items(recipe_id)',
   'CREATE INDEX idx_shopping_list_items_is_checked ON shopping_list_items(is_checked)',
+  'CREATE INDEX idx_shopping_list_items_category ON shopping_list_items(category)',
 ];

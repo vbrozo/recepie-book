@@ -5,6 +5,7 @@ class ShoppingListItem {
   final String name;
   final double? quantity;
   final String? unit;
+  final String? category;
   final bool isChecked;
   final String? recipeId;
   final DateTime createdAt;
@@ -15,6 +16,7 @@ class ShoppingListItem {
     required this.name,
     this.quantity,
     this.unit,
+    this.category,
     this.isChecked = false,
     this.recipeId,
     required this.createdAt,
@@ -26,6 +28,7 @@ class ShoppingListItem {
     String? name,
     double? quantity,
     String? unit,
+    String? category,
     bool? isChecked,
     String? recipeId,
     DateTime? createdAt,
@@ -36,6 +39,7 @@ class ShoppingListItem {
       name: name ?? this.name,
       quantity: quantity ?? this.quantity,
       unit: unit ?? this.unit,
+      category: category ?? this.category,
       isChecked: isChecked ?? this.isChecked,
       recipeId: recipeId ?? this.recipeId,
       createdAt: createdAt ?? this.createdAt,
@@ -49,6 +53,7 @@ class ShoppingListItem {
       name: map['name'] as String,
       quantity: map['quantity'] as double?,
       unit: map['unit'] as String?,
+      category: map['category'] as String?,
       isChecked: (map['is_checked'] as int) == 1,
       recipeId: map['recipe_id'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
@@ -62,6 +67,7 @@ class ShoppingListItem {
       'name': name,
       'quantity': quantity,
       'unit': unit,
+      'category': category,
       'is_checked': isChecked ? 1 : 0,
       'recipe_id': recipeId,
       'created_at': createdAt.toIso8601String(),
@@ -75,6 +81,7 @@ class ShoppingListItem {
       name: json['name'] as String,
       quantity: (json['quantity'] as num?)?.toDouble(),
       unit: json['unit'] as String?,
+      category: json['category'] as String?,
       isChecked: json['is_checked'] as bool? ?? false,
       recipeId: json['recipe_id'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -88,6 +95,7 @@ class ShoppingListItem {
       'name': name,
       'quantity': quantity,
       'unit': unit,
+      'category': category,
       'is_checked': isChecked,
       'recipe_id': recipeId,
       'created_at': createdAt.toIso8601String(),

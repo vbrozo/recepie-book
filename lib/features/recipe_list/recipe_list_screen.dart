@@ -35,6 +35,11 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         title: const Text('Recepti'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.shopping_cart_outlined),
+            tooltip: 'Shopping lista',
+            onPressed: () => context.push('/shopping-list'),
+          ),
+          IconButton(
             icon: const Icon(Icons.label_outline),
             tooltip: 'Tagovi',
             onPressed: () => context.push('/tags'),

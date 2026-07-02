@@ -135,12 +135,19 @@ dodane stavke imaju `recipe_id = NULL`).
 | name        | TEXT    | NOT NULL                                             |
 | quantity    | REAL    |                                                       |
 | unit        | TEXT    |                                                       |
+| category    | TEXT    | nullable — grupiranje u UI-u (npr. "Voće i povrće")   |
 | is_checked  | INTEGER | NOT NULL DEFAULT 0 (0/1)                              |
 | recipe_id   | TEXT    | FK → recipes(id) ON DELETE SET NULL (nullable)        |
 | created_at  | TEXT    | NOT NULL                                             |
 | updated_at  | TEXT    | NOT NULL (check/uncheck, edit količine)               |
 
-Indeksi: `recipe_id`, `is_checked` (filter "što je ostalo za kupiti").
+Indeksi: `recipe_id`, `is_checked` (filter "što je ostalo za kupiti"), `category`
+(grupiranje).
+
+Dodavanje sastojaka iz recepta i ručni unos spajaju se u postojeći
+(neoznačeni) red ako se podudaraju naziv (case-insensitive) i jedinica —
+vidi `ShoppingListRepository._mergeOrInsert` u
+`lib/repositories/shopping_list_repository.dart`.
 
 ---
 
