@@ -33,9 +33,9 @@ class AppBottomTabBar extends StatelessWidget {
     return Container(
       height: AppSpacing.tabBarHeight,
       padding: EdgeInsets.only(bottom: bottomInset, top: 8),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.hairline, width: 1)),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        border: Border(top: BorderSide(color: context.colors.hairline, width: 1)),
       ),
       child: Row(
         children: [
@@ -56,7 +56,7 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.orange : AppColors.mutedAlt;
+    final color = selected ? context.colors.orange : context.colors.mutedAlt;
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -66,7 +66,7 @@ class _TabButton extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             spec.label,
-            style: AppTypography.sans(
+            style: context.typography.sans(
               fontSize: 11,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               color: color,

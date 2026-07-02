@@ -16,6 +16,9 @@ Live demo (GitHub Pages, build iz `/docs`): `https://<user>.github.io/recepie-bo
   Sastojci & Postupak)
 - Detalji recepta: hero slika, sastojci, koraci pripreme, tagovi, statistike
   (vrijeme, porcije, broj sastojaka)
+- **Skaliranje porcija** — stepper na broju porcija preračunava količine
+  svih sastojaka uživo (i količine poslane u shopping listu); vrijedi samo
+  za trenutni prikaz, ne mijenja spremljeni recept
 - Favoriti
 - Galerija slika po receptu (masonry grid + fullscreen swipe/zoom preglednik)
 - **Verzioniranje recepata** — svaki save (kreiranje ili uređivanje) stvara
@@ -48,8 +51,13 @@ Live demo (GitHub Pages, build iz `/docs`): `https://<user>.github.io/recepie-bo
   "+" gumb za brzo dodavanje
 - Splash ekran, Home s "Nedavno dodano" i "Omiljeni" pregledom
 - Postavke (Backup/Import/Export su za sada samo UI redovi bez logike)
+- **Svijetla/tamna tema** (+ prati postavku sustava), birač u Postavke →
+  Izgled → Tema; odabir se pamti preko `shared_preferences`
 - Dizajn sustav usklađen s Figma predloškom (Newsreader + Hanken Grotesque
-  fontovi, topla krem/narančasta paleta) — vidi `lib/design/`
+  fontovi, topla krem/narančasta paleta) — vidi `lib/design/`. Boje se
+  čitaju preko `context.colors`/`context.typography`
+  (`ThemeExtension<AppColorPalette>` registriran u `app.dart`), nikad kao
+  statične konstante, kako bi se pratila aktivna tema
 
 ## Tech stack
 

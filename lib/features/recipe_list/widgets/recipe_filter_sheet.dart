@@ -60,7 +60,7 @@ class _RecipeFilterSheetContent extends StatelessWidget {
         ),
         if (tags.isNotEmpty) ...[
           const SizedBox(height: 20),
-          Text('Tagovi', style: AppTypography.sans(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.muted)),
+          Text('Tagovi', style: context.typography.sans(fontSize: 13, fontWeight: FontWeight.w700, color: context.colors.muted)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -82,7 +82,7 @@ class _RecipeFilterSheetContent extends StatelessWidget {
             if (state.hasActiveFilters)
               TextButton(
                 onPressed: notifier.clearFilters,
-                child: Text('Očisti filtere', style: AppTypography.sans(fontWeight: FontWeight.w600, color: AppColors.orangeDeep)),
+                child: Text('Očisti filtere', style: context.typography.sans(fontWeight: FontWeight.w600, color: context.colors.orangeDeep)),
               ),
             const Spacer(),
             TextButton(
@@ -90,7 +90,7 @@ class _RecipeFilterSheetContent extends StatelessWidget {
                 Navigator.pop(context);
                 context.push('/tags');
               },
-              child: Text('Upravljaj tagovima', style: AppTypography.sans(fontWeight: FontWeight.w600, color: AppColors.muted)),
+              child: Text('Upravljaj tagovima', style: context.typography.sans(fontWeight: FontWeight.w600, color: context.colors.muted)),
             ),
           ],
         ),

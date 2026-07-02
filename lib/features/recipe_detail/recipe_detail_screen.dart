@@ -19,19 +19,30 @@ import '../../providers/recipe_notifier.dart';
 import '../../providers/shopping_list_provider.dart';
 import '../../widgets/recipe_image_thumbnail.dart';
 
-class RecipeDetailScreen extends ConsumerWidget {
+class RecipeDetailScreen extends ConsumerStatefulWidget {
   const RecipeDetailScreen({super.key, required this.recipeId});
 
   final String recipeId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
+}
+
+class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
+  /// Servings the ingredient list is currently scaled to — starts out equal
+  /// to the recipe's own `servings`, adjustable via the stepper in
+  /// [_StatsRow]. Session-only (not persisted): reopening the recipe resets
+  /// it back to the recipe's stated serving count.
+  int? _servings;
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(recipeListProvider);
     final notifier = ref.read(recipeListProvider.notifier);
 
     RecipeWithDetails? item;
     for (final recipe in state.recipes) {
-      if (recipe.recipe.id == recipeId) {
+      if (recipe.recipe.id == widget.recipeId) {
         item = recipe;
         break;
       }
@@ -39,7 +50,7 @@ class RecipeDetailScreen extends ConsumerWidget {
 
     if (item == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.colors.background,
         body: Center(
           child: state.isLoading ? const CircularProgressIndicator() : const Text('Recept nije pronađen.'),
         ),
@@ -47,6 +58,12 @@ class RecipeDetailScreen extends ConsumerWidget {
     }
 
     final recipe = item.recipe;
+    _servings ??= recipe.servings;
+    final originalServings = recipe.servings;
+    final scale = (originalServings != null && originalServings > 0 && _servings != null)
+        ? _servings! / originalServings
+        : 1.0;
+
     String? coverPath;
     for (final image in item.images) {
       if (image.isPrimary) {
@@ -57,7 +74,7 @@ class RecipeDetailScreen extends ConsumerWidget {
     coverPath ??= item.images.isNotEmpty ? item.images.first.filePath : null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: Stack(
         children: [
           Column(
@@ -70,7 +87,7 @@ class RecipeDetailScreen extends ConsumerWidget {
                   children: [
                     coverPath != null
                         ? RecipeImageThumbnail(relativePath: coverPath, width: double.infinity, height: 326, radius: 0)
-                        : Container(color: AppColors.oliveSoft, child: const Icon(Icons.restaurant_menu, size: 48, color: AppColors.olive)),
+                        : Container(color: context.colors.oliveSoft, child: Icon(Icons.restaurant_menu, size: 48, color: context.colors.olive)),
                     Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
@@ -88,8 +105,8 @@ class RecipeDetailScreen extends ConsumerWidget {
                 child: Transform.translate(
                   offset: const Offset(0, -26),
                   child: Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.background,
+                    decoration: BoxDecoration(
+                      color: context.colors.background,
                       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                     ),
                     child: ListView(
@@ -102,20 +119,26 @@ class RecipeDetailScreen extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text(recipe.title, style: AppTypography.serif(fontSize: 30)),
+                        Text(recipe.title, style: context.typography.serif(fontSize: 30)),
                         if (recipe.description != null && recipe.description!.isNotEmpty) ...[
                           const SizedBox(height: 8),
-                          Text(recipe.description!, style: AppTypography.sans(fontSize: 14, color: AppColors.inkSecondary)),
+                          Text(recipe.description!, style: context.typography.sans(fontSize: 14, color: context.colors.inkSecondary)),
                         ],
                         const SizedBox(height: 16),
-                        _StatsRow(item: item),
+                        _StatsRow(
+                          item: item,
+                          servings: _servings,
+                          onServingsChanged: originalServings == null || originalServings <= 0
+                              ? null
+                              : (value) => setState(() => _servings = value),
+                        ),
                         const SizedBox(height: 8),
                         _ActionsRow(
                           onGallery: () => context.push('/recipe/${recipe.id}/gallery'),
                           onVersions: () => context.push('/recipe/${recipe.id}/versions'),
                           onShoppingList: item.ingredients.isEmpty
                               ? null
-                              : () => _addToShoppingList(context, ref, recipe.id, item!.ingredients),
+                              : () => _addToShoppingList(context, ref, recipe.id, _scaledIngredients(item!.ingredients, scale)),
                         ),
                         if (item.images.isNotEmpty) ...[
                           const SizedBox(height: 20),
@@ -131,17 +154,18 @@ class RecipeDetailScreen extends ConsumerWidget {
                           ),
                         ],
                         const SizedBox(height: 24),
-                        Text('Sastojci', style: AppTypography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                        Text('Sastojci', style: context.typography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: context.colors.ink)),
                         const SizedBox(height: 8),
                         if (item.ingredients.isEmpty)
-                          Text('Nema unesenih sastojaka.', style: AppTypography.sans(color: AppColors.muted))
+                          Text('Nema unesenih sastojaka.', style: context.typography.sans(color: context.colors.muted))
                         else
-                          for (final ingredient in item.ingredients) _IngredientBulletRow(ingredient: ingredient),
+                          for (final ingredient in item.ingredients)
+                            _IngredientBulletRow(ingredient: ingredient, scale: scale),
                         const SizedBox(height: 24),
-                        Text('Postupak', style: AppTypography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                        Text('Postupak', style: context.typography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: context.colors.ink)),
                         const SizedBox(height: 8),
                         if (item.steps.isEmpty)
-                          Text('Nema unesenih koraka.', style: AppTypography.sans(color: AppColors.muted))
+                          Text('Nema unesenih koraka.', style: context.typography.sans(color: context.colors.muted))
                         else
                           for (final step in item.steps)
                             Padding(
@@ -174,7 +198,7 @@ class RecipeDetailScreen extends ConsumerWidget {
                     children: [
                       GlassIconButton(
                         icon: recipe.isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: recipe.isFavorite ? AppColors.orange : Colors.white,
+                        color: recipe.isFavorite ? context.colors.orange : Colors.white,
                         onTap: () => notifier.toggleFavorite(recipe.id),
                       ),
                       const SizedBox(width: 8),
@@ -196,9 +220,9 @@ class RecipeDetailScreen extends ConsumerWidget {
               top: false,
               child: Container(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border(top: BorderSide(color: AppColors.hairline)),
+                decoration: BoxDecoration(
+                  color: context.colors.surface,
+                  border: Border(top: BorderSide(color: context.colors.hairline)),
                 ),
                 child: Row(
                   children: [
@@ -261,31 +285,115 @@ class RecipeDetailScreen extends ConsumerWidget {
       const SnackBar(content: Text('Sastojci dodani u shopping listu.')),
     );
   }
+
+  /// Applies [scale] to every ingredient's quantity — used when sending
+  /// ingredients to the shopping list, so a doubled-up recipe adds doubled
+  /// quantities instead of the original recipe's amounts.
+  List<Ingredient> _scaledIngredients(List<Ingredient> ingredients, double scale) {
+    if (scale == 1.0) return ingredients;
+    return [
+      for (final ingredient in ingredients)
+        ingredient.copyWith(quantity: ingredient.quantity != null ? ingredient.quantity! * scale : null),
+    ];
+  }
 }
 
 class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.item});
+  const _StatsRow({required this.item, required this.servings, required this.onServingsChanged});
 
   final RecipeWithDetails item;
+
+  /// The currently selected serving count (may differ from
+  /// `item.recipe.servings` once the user has used the stepper).
+  final int? servings;
+
+  /// Null when the recipe has no `servings` set — scaling has no baseline
+  /// to work from, so the stepper is hidden rather than shown disabled.
+  final ValueChanged<int>? onServingsChanged;
 
   @override
   Widget build(BuildContext context) {
     final recipe = item.recipe;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: context.colors.hairline),
       ),
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: [
           _StatColumn(value: recipe.prepTimeMinutes != null ? '${recipe.prepTimeMinutes} min' : '—', label: 'Vrijeme'),
           const _StatDivider(),
-          _StatColumn(value: recipe.servings != null ? '${recipe.servings}' : '—', label: 'Porcije'),
+          onServingsChanged != null
+              ? Expanded(
+                  child: _ServingsStepper(
+                    servings: servings ?? recipe.servings!,
+                    onChanged: onServingsChanged!,
+                  ),
+                )
+              : _StatColumn(value: recipe.servings != null ? '${recipe.servings}' : '—', label: 'Porcije'),
           const _StatDivider(),
           _StatColumn(value: '${item.ingredients.length}', label: 'Sastojci'),
         ],
+      ),
+    );
+  }
+}
+
+class _ServingsStepper extends StatelessWidget {
+  const _ServingsStepper({required this.servings, required this.onChanged});
+
+  final int servings;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _StepperButton(
+              icon: Icons.remove,
+              onTap: servings > 1 ? () => onChanged(servings - 1) : null,
+            ),
+            SizedBox(
+              width: 28,
+              child: Text(
+                '$servings',
+                textAlign: TextAlign.center,
+                style: context.typography.sans(fontWeight: FontWeight.w700, fontSize: 16, color: context.colors.ink),
+              ),
+            ),
+            _StepperButton(
+              icon: Icons.add,
+              onTap: () => onChanged(servings + 1),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text('Porcije', style: context.typography.sans(fontSize: 11, color: context.colors.muted)),
+      ],
+    );
+  }
+}
+
+class _StepperButton extends StatelessWidget {
+  const _StepperButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Icon(icon, size: 16, color: onTap == null ? context.colors.faint : context.colors.orangeDeep),
       ),
     );
   }
@@ -302,9 +410,9 @@ class _StatColumn extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(value, style: AppTypography.sans(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.ink)),
+          Text(value, style: context.typography.sans(fontWeight: FontWeight.w700, fontSize: 16, color: context.colors.ink)),
           const SizedBox(height: 2),
-          Text(label, style: AppTypography.sans(fontSize: 11, color: AppColors.muted)),
+          Text(label, style: context.typography.sans(fontSize: 11, color: context.colors.muted)),
         ],
       ),
     );
@@ -316,7 +424,7 @@ class _StatDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 32, color: AppColors.hairline);
+    return Container(width: 1, height: 32, color: context.colors.hairline);
   }
 }
 
@@ -359,9 +467,9 @@ class _ActionLink extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: AppColors.orangeDeep),
+            Icon(icon, size: 16, color: context.colors.orangeDeep),
             const SizedBox(width: 4),
-            Text(label, style: AppTypography.sans(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.orangeDeep)),
+            Text(label, style: context.typography.sans(fontSize: 13, fontWeight: FontWeight.w600, color: context.colors.orangeDeep)),
           ],
         ),
       ),
@@ -370,32 +478,46 @@ class _ActionLink extends StatelessWidget {
 }
 
 class _IngredientBulletRow extends StatelessWidget {
-  const _IngredientBulletRow({required this.ingredient});
+  const _IngredientBulletRow({required this.ingredient, this.scale = 1.0});
 
   final Ingredient ingredient;
 
+  /// Multiplier applied to `ingredient.quantity` for display — driven by
+  /// the servings stepper in [_StatsRow]. 1.0 (the default) shows the
+  /// recipe's original amounts unchanged.
+  final double scale;
+
   @override
   Widget build(BuildContext context) {
+    final scaledQuantity = ingredient.quantity != null ? ingredient.quantity! * scale : null;
     final quantity = [
-      if (ingredient.quantity != null) _formatQuantity(ingredient.quantity!),
+      if (scaledQuantity != null) _formatQuantity(scaledQuantity),
       if (ingredient.unit != null && ingredient.unit!.isNotEmpty) ingredient.unit,
     ].join(' ');
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.hairline))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: context.colors.hairline))),
       child: Row(
         children: [
-          Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.orange, shape: BoxShape.circle)),
+          Container(width: 6, height: 6, decoration: BoxDecoration(color: context.colors.orange, shape: BoxShape.circle)),
           const SizedBox(width: 10),
-          Expanded(child: Text(ingredient.name, style: AppTypography.sans(fontSize: 15, color: AppColors.inkSecondary))),
-          if (quantity.isNotEmpty) Text(quantity, style: AppTypography.sans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
+          Expanded(child: Text(ingredient.name, style: context.typography.sans(fontSize: 15, color: context.colors.inkSecondary))),
+          if (quantity.isNotEmpty) Text(quantity, style: context.typography.sans(fontSize: 14, fontWeight: FontWeight.w600, color: context.colors.ink)),
         ],
       ),
     );
   }
 
+  /// Rounds to 2 decimal places and trims trailing zeros — scaling
+  /// (e.g. 1 / 3 servings * 2) produces long floating-point tails
+  /// (0.6666666666666666) that `toString()` alone would show raw.
   String _formatQuantity(double value) {
-    return value == value.roundToDouble() ? value.toInt().toString() : value.toString();
+    final rounded = double.parse(value.toStringAsFixed(2));
+    if (rounded == rounded.roundToDouble()) return rounded.toInt().toString();
+    return rounded
+        .toString()
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
   }
 }

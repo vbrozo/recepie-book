@@ -37,30 +37,30 @@ class CompactRecipeRow extends StatelessWidget {
                 : Container(
                     width: 62,
                     height: 62,
-                    decoration: BoxDecoration(color: AppColors.oliveSoft, borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.restaurant_menu, color: AppColors.olive, size: 20),
+                    decoration: BoxDecoration(color: context.colors.oliveSoft, borderRadius: BorderRadius.circular(14)),
+                    child: Icon(Icons.restaurant_menu, color: context.colors.olive, size: 20),
                   ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(recipe.title, style: AppTypography.serif(fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(recipe.title, style: context.typography.serif(fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      const Icon(Icons.access_time, size: 13, color: AppColors.muted),
+                      Icon(Icons.access_time, size: 13, color: context.colors.muted),
                       const SizedBox(width: 4),
                       Text(
                         recipe.prepTimeMinutes != null ? '${recipe.prepTimeMinutes} min' : '—',
-                        style: AppTypography.sans(fontSize: 12, color: AppColors.muted),
+                        style: context.typography.sans(fontSize: 12, color: context.colors.muted),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.favorite, color: AppColors.orange, size: 20),
+            Icon(Icons.favorite, color: context.colors.orange, size: 20),
           ],
         ),
       ),

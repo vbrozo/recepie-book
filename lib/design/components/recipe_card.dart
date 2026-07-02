@@ -62,10 +62,10 @@ class RecipeCard extends StatelessWidget {
                         width: cardWidth ?? double.infinity,
                         height: imageHeight,
                         decoration: BoxDecoration(
-                          color: AppColors.oliveSoft,
+                          color: context.colors.oliveSoft,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Icon(Icons.restaurant_menu, color: AppColors.olive),
+                        child: Icon(Icons.restaurant_menu, color: context.colors.olive),
                       ),
               ),
               if (recipe.isFavorite)
@@ -81,16 +81,16 @@ class RecipeCard extends StatelessWidget {
             recipe.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.serif(fontSize: variant == RecipeCardVariant.large ? 18 : 16),
+            style: context.typography.serif(fontSize: variant == RecipeCardVariant.large ? 18 : 16),
           ),
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.access_time, size: 14, color: AppColors.muted),
+              Icon(Icons.access_time, size: 14, color: context.colors.muted),
               const SizedBox(width: 4),
               Text(
                 recipe.prepTimeMinutes != null ? '${recipe.prepTimeMinutes} min' : '—',
-                style: AppTypography.sans(fontSize: 12, color: AppColors.muted),
+                style: context.typography.sans(fontSize: 12, color: context.colors.muted),
               ),
               if (onFavoriteToggle != null) ...[
                 const Spacer(),
@@ -99,7 +99,7 @@ class RecipeCard extends StatelessWidget {
                   child: Icon(
                     recipe.isFavorite ? Icons.favorite : Icons.favorite_border,
                     size: 16,
-                    color: recipe.isFavorite ? AppColors.orange : AppColors.faint,
+                    color: recipe.isFavorite ? context.colors.orange : context.colors.faint,
                   ),
                 ),
               ],
@@ -122,7 +122,7 @@ class _FavoriteBadge extends StatelessWidget {
       width: 28,
       height: 28,
       decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-      child: const Icon(Icons.favorite, size: 16, color: AppColors.orange),
+      child: Icon(Icons.favorite, size: 16, color: context.colors.orange),
     );
   }
 }

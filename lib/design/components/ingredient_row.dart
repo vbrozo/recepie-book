@@ -28,22 +28,22 @@ class IngredientRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: context.colors.hairline),
       ),
       child: Row(
         children: [
           if (showDragHandle) ...[
-            const Icon(Icons.drag_indicator, size: 18, color: AppColors.faint),
+            Icon(Icons.drag_indicator, size: 18, color: context.colors.faint),
             const SizedBox(width: 10),
           ],
           SizedBox(
             width: 56,
-            child: Text(quantityLabel, style: AppTypography.sans(fontWeight: FontWeight.w700, color: AppColors.ink)),
+            child: Text(quantityLabel, style: context.typography.sans(fontWeight: FontWeight.w700, color: context.colors.ink)),
           ),
           Expanded(
-            child: Text(name, style: AppTypography.sans(color: AppColors.inkSecondary)),
+            child: Text(name, style: context.typography.sans(color: context.colors.inkSecondary)),
           ),
           if (changed) ...[
             const TagChip(label: 'izmijenjeno', variant: TagChipVariant.diffRemoved),
@@ -52,7 +52,7 @@ class IngredientRow extends StatelessWidget {
           if (onDelete != null)
             GestureDetector(
               onTap: onDelete,
-              child: const Icon(Icons.close, size: 18, color: AppColors.faint),
+              child: Icon(Icons.close, size: 18, color: context.colors.faint),
             ),
         ],
       ),
@@ -77,9 +77,9 @@ class AddIngredientRow extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.faintAlt, style: BorderStyle.solid),
+          border: Border.all(color: context.colors.faintAlt, style: BorderStyle.solid),
         ),
-        child: Text(label, style: AppTypography.sans(fontWeight: FontWeight.w600, color: AppColors.orangeDeep)),
+        child: Text(label, style: context.typography.sans(fontWeight: FontWeight.w600, color: context.colors.orangeDeep)),
       ),
     );
   }

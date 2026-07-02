@@ -37,7 +37,7 @@ class RecipeVersionsScreen extends ConsumerWidget {
     final versions = versionState.versions;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -50,7 +50,7 @@ class RecipeVersionsScreen extends ConsumerWidget {
                     child: Text(
                       'Verzije recepta',
                       textAlign: TextAlign.center,
-                      style: AppTypography.sans(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.ink),
+                      style: context.typography.sans(fontSize: 16, fontWeight: FontWeight.w600, color: context.colors.ink),
                     ),
                   ),
                   if (current != null)
@@ -70,11 +70,11 @@ class RecipeVersionsScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(current.recipe.title, style: AppTypography.serif(fontSize: 24)),
+                    Text(current.recipe.title, style: context.typography.serif(fontSize: 24)),
                     const SizedBox(height: 2),
                     Text(
                       versions.isEmpty ? 'Nema spremljenih verzija' : '${versions.length} ${versions.length == 1 ? 'verzija' : 'verzija'}',
-                      style: AppTypography.sans(fontSize: 13, color: AppColors.muted),
+                      style: context.typography.sans(fontSize: 13, color: context.colors.muted),
                     ),
                   ],
                 ),

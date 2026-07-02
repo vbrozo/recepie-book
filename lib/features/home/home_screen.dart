@@ -43,7 +43,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final favorites = state.recipes.where((item) => item.recipe.isFavorite).toList();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         bottom: false,
         child: state.isLoading && state.recipes.isEmpty
@@ -70,9 +70,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       140,
                     ),
                     children: [
-                      Text(dateLabel, style: AppTypography.sans(fontSize: 14, color: AppColors.mutedAlt)),
+                      Text(dateLabel, style: context.typography.sans(fontSize: 14, color: context.colors.mutedAlt)),
                       const SizedBox(height: 4),
-                      Text('Moji recepti', style: AppTypography.serif(fontSize: 34)),
+                      Text('Moji recepti', style: context.typography.serif(fontSize: 34)),
                       const SizedBox(height: 16),
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
@@ -86,10 +86,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Nedavno dodano', style: AppTypography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                            Text('Nedavno dodano', style: context.typography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: context.colors.ink)),
                             GestureDetector(
                               onTap: () => context.go('/recipes'),
-                              child: Text('Sve', style: AppTypography.sans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.orange)),
+                              child: Text('Sve', style: context.typography.sans(fontSize: 14, fontWeight: FontWeight.w600, color: context.colors.orange)),
                             ),
                           ],
                         ),
@@ -115,7 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ],
                       if (favorites.isNotEmpty) ...[
                         const SizedBox(height: 28),
-                        Text('Omiljeni', style: AppTypography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                        Text('Omiljeni', style: context.typography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: context.colors.ink)),
                         for (final item in favorites)
                           CompactRecipeRow(item: item, onTap: () => context.push('/recipe/${item.recipe.id}')),
                       ],

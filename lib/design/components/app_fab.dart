@@ -16,10 +16,10 @@ class AppFab extends StatelessWidget {
     return Container(
       width: AppSpacing.fabSize,
       height: AppSpacing.fabSize,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.orange,
-        boxShadow: [BoxShadow(color: AppColors.orangeShadow, blurRadius: 22, offset: Offset(0, 10))],
+        color: context.colors.orange,
+        boxShadow: [BoxShadow(color: context.colors.orangeShadow, blurRadius: 22, offset: const Offset(0, 10))],
       ),
       child: Material(
         color: Colors.transparent,

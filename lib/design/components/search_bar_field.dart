@@ -26,23 +26,23 @@ class SearchBarField extends StatelessWidget {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: context.colors.hairline),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          const Icon(Icons.search, color: AppColors.faint, size: 20),
+          Icon(Icons.search, color: context.colors.faint, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
               controller: controller,
               onChanged: onChanged,
-              style: AppTypography.sans(fontSize: 15, color: AppColors.ink),
+              style: context.typography.sans(fontSize: 15, color: context.colors.ink),
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle: AppTypography.sans(fontSize: 15, color: AppColors.faint),
+                hintStyle: context.typography.sans(fontSize: 15, color: context.colors.faint),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -50,7 +50,7 @@ class SearchBarField extends StatelessWidget {
           ),
           if (onFilterTap != null)
             IconButton(
-              icon: const Icon(Icons.tune, color: AppColors.orange, size: 20),
+              icon: Icon(Icons.tune, color: context.colors.orange, size: 20),
               onPressed: onFilterTap,
               splashRadius: 20,
             ),

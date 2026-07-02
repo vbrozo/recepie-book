@@ -30,13 +30,13 @@ class PrimaryButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
         boxShadow: onPressed == null
             ? null
-            : const [BoxShadow(color: AppColors.orangeButtonShadow, blurRadius: 20, offset: Offset(0, 8))],
+            : [BoxShadow(color: context.colors.orangeButtonShadow, blurRadius: 20, offset: const Offset(0, 8))],
       ),
       child: FilledButton(
         onPressed: isLoading ? null : onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.orange,
-          disabledBackgroundColor: AppColors.orange.withValues(alpha: 0.5),
+          backgroundColor: context.colors.orange,
+          disabledBackgroundColor: context.colors.orange.withValues(alpha: 0.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.buttonRadius)),
           elevation: 0,
         ),
@@ -54,7 +54,7 @@ class PrimaryButton extends StatelessWidget {
                     Icon(icon, size: 20, color: Colors.white),
                     const SizedBox(width: 8),
                   ],
-                  Text(label, style: AppTypography.sans(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 16)),
+                  Text(label, style: context.typography.sans(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 16)),
                 ],
               ),
       ),

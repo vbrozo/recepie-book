@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'design/app_colors.dart';
@@ -16,6 +17,7 @@ import 'features/shopping_list/shopping_list_screen.dart';
 import 'features/splash/splash_screen.dart';
 import 'features/tags/tags_screen.dart';
 import 'models/recipe_with_details.dart';
+import 'providers/theme_mode_provider.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -81,43 +83,56 @@ final _router = GoRouter(
   ],
 );
 
-class RecipeBookApp extends StatelessWidget {
+class RecipeBookApp extends ConsumerWidget {
   const RecipeBookApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
     return MaterialApp.router(
       title: 'Kuharica',
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: AppColors.background,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.orange,
-          primary: AppColors.orange,
-          surface: AppColors.surface,
-        ),
-        textTheme: AppTypography.textTheme(),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: AppColors.surface,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.hairline),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.hairline),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.orange, width: 1.5),
-          ),
-          labelStyle: AppTypography.eyebrow(),
-          hintStyle: AppTypography.sans(color: AppColors.faint),
-        ),
-      ),
+      themeMode: themeMode,
+      theme: _buildTheme(AppColorPalette.light, Brightness.light),
+      darkTheme: _buildTheme(AppColorPalette.dark, Brightness.dark),
       routerConfig: _router,
+    );
+  }
+
+  ThemeData _buildTheme(AppColorPalette palette, Brightness brightness) {
+    final typography = AppTypography(palette);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      scaffoldBackgroundColor: palette.background,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: palette.orange,
+        brightness: brightness,
+        primary: palette.orange,
+        surface: palette.surface,
+      ),
+      extensions: [palette],
+      textTheme: typography.textTheme(),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: palette.surface,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: palette.hairline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: palette.hairline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: palette.orange, width: 1.5),
+        ),
+        labelStyle: typography.eyebrow(),
+        hintStyle: typography.sans(color: palette.faint),
+      ),
     );
   }
 }

@@ -15,9 +15,9 @@ class StepCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: context.colors.hairline),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,17 +26,17 @@ class StepCard extends StatelessWidget {
             width: 28,
             height: 28,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(color: AppColors.orangeSoft, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: context.colors.orangeSoft, shape: BoxShape.circle),
             child: Text(
               '$stepNumber',
-              style: AppTypography.sans(fontWeight: FontWeight.w700, color: AppColors.orangeDeep, fontSize: 13),
+              style: context.typography.sans(fontWeight: FontWeight.w700, color: context.colors.orangeDeep, fontSize: 13),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               instruction,
-              style: AppTypography.sans(fontSize: 15, color: AppColors.inkSecondary, height: 1.45),
+              style: context.typography.sans(fontSize: 15, color: context.colors.inkSecondary, height: 1.45),
             ),
           ),
         ],

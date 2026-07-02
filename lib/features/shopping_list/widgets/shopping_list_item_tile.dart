@@ -26,17 +26,17 @@ class ShoppingListItemTile extends StatelessWidget {
     ].join(' ');
 
     final checked = item.isChecked;
-    final textColor = checked ? AppColors.mutedAlt : AppColors.ink;
-    final metaColor = checked ? AppColors.faintAlt : AppColors.muted;
+    final textColor = checked ? context.colors.mutedAlt : context.colors.ink;
+    final metaColor = checked ? context.colors.faintAlt : context.colors.muted;
 
     return Dismissible(
       key: ValueKey(item.id),
       direction: DismissDirection.endToStart,
       background: Container(
-        color: AppColors.diffSoft,
+        color: context.colors.diffSoft,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: const Icon(Icons.delete_outline, color: AppColors.orangeDeep),
+        child: Icon(Icons.delete_outline, color: context.colors.orangeDeep),
       ),
       onDismissed: (_) => onDelete(),
       child: InkWell(
@@ -50,7 +50,7 @@ class ShoppingListItemTile extends StatelessWidget {
                 height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: checked ? AppColors.olive : Colors.transparent,
+                  color: checked ? context.colors.olive : Colors.transparent,
                   border: checked ? null : Border.all(color: const Color(0xFFD8CDB6), width: 2),
                 ),
                 child: checked ? const Icon(Icons.check, size: 15, color: Colors.white) : null,
@@ -59,7 +59,7 @@ class ShoppingListItemTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.name,
-                  style: AppTypography.sans(
+                  style: context.typography.sans(
                     fontSize: 15,
                     color: textColor,
                     decoration: checked ? TextDecoration.lineThrough : null,
@@ -67,7 +67,7 @@ class ShoppingListItemTile extends StatelessWidget {
                 ),
               ),
               if (quantityLabel.isNotEmpty)
-                Text(quantityLabel, style: AppTypography.sans(fontSize: 13, color: metaColor)),
+                Text(quantityLabel, style: context.typography.sans(fontSize: 13, color: metaColor)),
             ],
           ),
         ),

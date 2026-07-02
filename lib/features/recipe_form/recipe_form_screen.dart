@@ -411,7 +411,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
     final nextVersionNumber = existingVersions.isEmpty ? 1 : existingVersions.first.versionNumber + 1;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -431,7 +431,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     _currentStep == 0 ? 'KORAK 1 OD 2 · OSNOVNI PODACI' : 'KORAK 2 OD 2 · SASTOJCI',
-                    style: AppTypography.eyebrow(),
+                    style: context.typography.eyebrow(),
                   ),
                 ),
               ),
@@ -468,7 +468,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
 
   List<Widget> _buildStepOne(BuildContext context) {
     return [
-      Text('NASLOVNA SLIKA', style: AppTypography.eyebrow()),
+      Text('NASLOVNA SLIKA', style: context.typography.eyebrow()),
       const SizedBox(height: 8),
       _HeroImagePicker(
         imageItems: _imageItems,
@@ -478,7 +478,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
         onRemove: _removeImageRow,
       ),
       const SizedBox(height: 20),
-      Text('NAZIV RECEPTA', style: AppTypography.eyebrow()),
+      Text('NAZIV RECEPTA', style: context.typography.eyebrow()),
       const SizedBox(height: 8),
       TextFormField(
         controller: _titleController,
@@ -498,7 +498,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('VRIJEME (MIN)', style: AppTypography.eyebrow()),
+                Text('VRIJEME (MIN)', style: context.typography.eyebrow()),
                 const SizedBox(height: 8),
                 TextFormField(controller: _prepController, keyboardType: TextInputType.number),
               ],
@@ -509,7 +509,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('PORCIJE', style: AppTypography.eyebrow()),
+                Text('PORCIJE', style: context.typography.eyebrow()),
                 const SizedBox(height: 8),
                 TextFormField(controller: _servingsController, keyboardType: TextInputType.number),
               ],
@@ -521,13 +521,13 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('KUHANJE (MIN)', style: AppTypography.eyebrow()),
+          Text('KUHANJE (MIN)', style: context.typography.eyebrow()),
           const SizedBox(height: 8),
           TextFormField(controller: _cookController, keyboardType: TextInputType.number),
         ],
       ),
       const SizedBox(height: 20),
-      Text('TAGOVI', style: AppTypography.eyebrow()),
+      Text('TAGOVI', style: context.typography.eyebrow()),
       const SizedBox(height: 8),
       Wrap(
         spacing: 8,
@@ -564,8 +564,8 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Sastojci', style: AppTypography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
-          IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.orange), onPressed: _addIngredientRow),
+          Text('Sastojci', style: context.typography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: context.colors.ink)),
+          IconButton(icon: Icon(Icons.add_circle_outline, color: context.colors.orange), onPressed: _addIngredientRow),
         ],
       ),
       for (var i = 0; i < _ingredientRows.length; i++)
@@ -582,8 +582,8 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Postupak', style: AppTypography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
-          IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.orange), onPressed: _addStepRow),
+          Text('Postupak', style: context.typography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: context.colors.ink)),
+          IconButton(icon: Icon(Icons.add_circle_outline, color: context.colors.orange), onPressed: _addStepRow),
         ],
       ),
       for (var i = 0; i < _stepRows.length; i++)
@@ -615,11 +615,11 @@ class _Header extends StatelessWidget {
         children: [
           IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack),
           Expanded(
-            child: Text(title, textAlign: TextAlign.center, style: AppTypography.sans(fontSize: 16, fontWeight: FontWeight.w600)),
+            child: Text(title, textAlign: TextAlign.center, style: context.typography.sans(fontSize: 16, fontWeight: FontWeight.w600)),
           ),
           TextButton(
             onPressed: onCancel,
-            child: Text('Odustani', style: AppTypography.sans(color: AppColors.mutedAlt, fontWeight: FontWeight.w600)),
+            child: Text('Odustani', style: context.typography.sans(color: context.colors.mutedAlt, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -643,7 +643,7 @@ class _ProgressBar extends StatelessWidget {
               height: 5,
               margin: EdgeInsets.only(right: i == 1 ? 0 : 6),
               decoration: BoxDecoration(
-                color: i <= currentStep ? AppColors.orange : AppColors.hairline,
+                color: i <= currentStep ? context.colors.orange : context.colors.hairline,
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
@@ -663,15 +663,15 @@ class _VersionBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppColors.orangeSoft, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: context.colors.orangeSoft, borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.orangeDeep, size: 20),
+          Icon(Icons.error_outline, color: context.colors.orangeDeep, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Promjene se ne spremaju preko originala — nastat će Verzija $nextVersionNumber.',
-              style: AppTypography.sans(fontSize: 13, color: AppColors.orangeDeep),
+              style: context.typography.sans(fontSize: 13, color: context.colors.orangeDeep),
             ),
           ),
         ],
@@ -702,9 +702,9 @@ class _AddTagChipState extends State<_AddTagChip> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(9999),
-            border: Border.all(color: AppColors.faintAlt),
+            border: Border.all(color: context.colors.faintAlt),
           ),
-          child: Text('+ dodaj', style: AppTypography.sans(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.muted)),
+          child: Text('+ dodaj', style: context.typography.sans(fontSize: 13, fontWeight: FontWeight.w600, color: context.colors.muted)),
         ),
       );
     }
@@ -714,7 +714,7 @@ class _AddTagChipState extends State<_AddTagChip> {
       child: TextField(
         controller: widget.controller,
         autofocus: true,
-        style: AppTypography.sans(fontSize: 13),
+        style: context.typography.sans(fontSize: 13),
         decoration: const InputDecoration(isDense: true, hintText: 'Naziv taga'),
         onSubmitted: (value) {
           widget.onSubmit(value);
@@ -757,16 +757,16 @@ class _HeroImagePicker extends StatelessWidget {
             width: double.infinity,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: context.colors.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.faintAlt),
+              border: Border.all(color: context.colors.faintAlt),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.add_photo_alternate_outlined, color: AppColors.muted, size: 28),
+                Icon(Icons.add_photo_alternate_outlined, color: context.colors.muted, size: 28),
                 const SizedBox(height: 8),
-                Text('+ Dodaj naslovnu sliku', style: AppTypography.sans(color: AppColors.muted, fontWeight: FontWeight.w600)),
+                Text('+ Dodaj naslovnu sliku', style: context.typography.sans(color: context.colors.muted, fontWeight: FontWeight.w600)),
               ],
             ),
           ),

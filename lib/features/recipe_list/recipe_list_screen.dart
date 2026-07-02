@@ -50,7 +50,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -63,13 +63,13 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('Recepti', style: AppTypography.serif(fontSize: 34)),
+                      Text('Recepti', style: context.typography.serif(fontSize: 34)),
                       const SizedBox(width: 10),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
                           '${state.recipes.length} recepta',
-                          style: AppTypography.sans(fontSize: 14, color: AppColors.muted),
+                          style: context.typography.sans(fontSize: 14, color: context.colors.muted),
                         ),
                       ),
                     ],
@@ -83,7 +83,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                   ),
                   if (state.errorMessage != null) ...[
                     const SizedBox(height: 8),
-                    Text(state.errorMessage!, style: AppTypography.sans(color: AppColors.orangeDeep, fontSize: 13)),
+                    Text(state.errorMessage!, style: context.typography.sans(color: context.colors.orangeDeep, fontSize: 13)),
                   ],
                 ],
               ),

@@ -35,11 +35,11 @@ class VersionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isActive ? AppColors.orange : AppColors.hairline, width: isActive ? 1.5 : 1),
+          border: Border.all(color: isActive ? context.colors.orange : context.colors.hairline, width: isActive ? 1.5 : 1),
           boxShadow: isActive
-              ? const [BoxShadow(color: AppColors.orangeShadow, blurRadius: 16, offset: Offset(0, 4))]
+              ? [BoxShadow(color: context.colors.orangeShadow, blurRadius: 16, offset: const Offset(0, 4))]
               : null,
         ),
         child: Column(
@@ -48,18 +48,18 @@ class VersionCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(title, style: AppTypography.sans(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.ink)),
+                  child: Text(title, style: context.typography.sans(fontWeight: FontWeight.w600, fontSize: 16, color: context.colors.ink)),
                 ),
                 if (isActive) const TagChip(label: 'Aktivna', variant: TagChipVariant.orange),
                 if (!isActive && onTap != null)
-                  const Icon(Icons.chevron_right, size: 18, color: AppColors.faint),
+                  Icon(Icons.chevron_right, size: 18, color: context.colors.faint),
               ],
             ),
             const SizedBox(height: 4),
-            Text(dateLabel, style: AppTypography.sans(fontSize: 12, color: AppColors.muted)),
+            Text(dateLabel, style: context.typography.sans(fontSize: 12, color: context.colors.muted)),
             if (note != null && note!.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(note!, style: AppTypography.sans(fontSize: 13, color: AppColors.inkSecondary)),
+              Text(note!, style: context.typography.sans(fontSize: 13, color: context.colors.inkSecondary)),
             ],
             if (addedChips.isNotEmpty || removedChips.isNotEmpty) ...[
               const SizedBox(height: 10),

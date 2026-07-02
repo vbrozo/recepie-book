@@ -31,14 +31,14 @@ class EmptyState extends StatelessWidget {
             Container(
               width: 88,
               height: 88,
-              decoration: const BoxDecoration(color: AppColors.orangeSoft, shape: BoxShape.circle),
-              child: Icon(icon, size: 36, color: AppColors.orange),
+              decoration: BoxDecoration(color: context.colors.orangeSoft, shape: BoxShape.circle),
+              child: Icon(icon, size: 36, color: context.colors.orange),
             ),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: AppTypography.sans(fontSize: 15, color: AppColors.muted),
+              style: context.typography.sans(fontSize: 15, color: context.colors.muted),
             ),
             if (ctaLabel != null && onCtaTap != null) ...[
               const SizedBox(height: 20),

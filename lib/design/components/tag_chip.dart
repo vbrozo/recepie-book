@@ -27,7 +27,7 @@ class TagChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg) = _colors();
+    final (bg, fg) = _colors(context);
 
     final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -35,7 +35,7 @@ class TagChip extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
         border: variant == TagChipVariant.outline && !selected
-            ? Border.all(color: AppColors.outlineButtonBorder, width: 1.5)
+            ? Border.all(color: context.colors.outlineButtonBorder, width: 1.5)
             : null,
       ),
       child: Row(
@@ -45,7 +45,7 @@ class TagChip extends StatelessWidget {
             Icon(leading, size: 14, color: fg),
             const SizedBox(width: 4),
           ],
-          Text(label, style: AppTypography.sans(fontSize: 13, fontWeight: FontWeight.w600, color: fg)),
+          Text(label, style: context.typography.sans(fontSize: 13, fontWeight: FontWeight.w600, color: fg)),
         ],
       ),
     );
@@ -53,18 +53,18 @@ class TagChip extends StatelessWidget {
     return onTap == null ? chip : GestureDetector(onTap: onTap, child: chip);
   }
 
-  (Color, Color) _colors() {
+  (Color, Color) _colors(BuildContext context) {
     switch (variant) {
       case TagChipVariant.olive:
-        return (AppColors.oliveSoft, AppColors.olive);
+        return (context.colors.oliveSoft, context.colors.olive);
       case TagChipVariant.orange:
-        return (AppColors.orangeSoft, AppColors.orangeDeep);
+        return (context.colors.orangeSoft, context.colors.orangeDeep);
       case TagChipVariant.diffAdded:
-        return (AppColors.oliveSoft, AppColors.olive);
+        return (context.colors.oliveSoft, context.colors.olive);
       case TagChipVariant.diffRemoved:
-        return (AppColors.diffSoft, AppColors.diffText);
+        return (context.colors.diffSoft, context.colors.diffText);
       case TagChipVariant.outline:
-        return selected ? (AppColors.orange, Colors.white) : (Colors.transparent, AppColors.ink);
+        return selected ? (context.colors.orange, Colors.white) : (Colors.transparent, context.colors.ink);
     }
   }
 }

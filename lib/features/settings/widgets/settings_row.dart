@@ -38,12 +38,12 @@ class SettingsRow extends StatelessWidget {
               child: Icon(icon, size: 18, color: iconColor),
             ),
             const SizedBox(width: 12),
-            Expanded(child: Text(label, style: AppTypography.sans(fontSize: 15, color: AppColors.ink))),
+            Expanded(child: Text(label, style: context.typography.sans(fontSize: 15, color: context.colors.ink))),
             if (trailingText != null)
-              Text(trailingText!, style: AppTypography.sans(fontSize: 13, color: AppColors.muted)),
+              Text(trailingText!, style: context.typography.sans(fontSize: 13, color: context.colors.muted)),
             if (showChevron) ...[
               const SizedBox(width: 6),
-              const Icon(Icons.chevron_right, size: 18, color: AppColors.faint),
+              Icon(Icons.chevron_right, size: 18, color: context.colors.faint),
             ],
           ],
         ),
@@ -69,16 +69,16 @@ class SettingsSection extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               header,
-              style: AppTypography.sans(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.muted, letterSpacing: 0.6),
+              style: context.typography.sans(fontSize: 13, fontWeight: FontWeight.w700, color: context.colors.muted, letterSpacing: 0.6),
             ),
           ),
           Container(
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18)),
+            decoration: BoxDecoration(color: context.colors.surface, borderRadius: BorderRadius.circular(18)),
             child: Column(
               children: [
                 for (var i = 0; i < rows.length; i++) ...[
                   rows[i],
-                  if (i != rows.length - 1) const Divider(height: 1, color: AppColors.hairline, indent: 16),
+                  if (i != rows.length - 1) Divider(height: 1, color: context.colors.hairline, indent: 16),
                 ],
               ],
             ),

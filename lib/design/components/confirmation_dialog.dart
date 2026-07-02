@@ -17,7 +17,7 @@ Future<bool> showConfirmationDialog(
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (context) => Dialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.colors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.cardRadiusLarge)),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -25,16 +25,16 @@ Future<bool> showConfirmationDialog(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: AppTypography.serif(fontSize: 20)),
+            Text(title, style: context.typography.serif(fontSize: 20)),
             const SizedBox(height: 8),
-            Text(message, style: AppTypography.sans(fontSize: 14, color: AppColors.muted)),
+            Text(message, style: context.typography.sans(fontSize: 14, color: context.colors.muted)),
             const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.pop(context, false),
-                    child: Text(cancelLabel, style: AppTypography.sans(fontWeight: FontWeight.w600, color: AppColors.muted)),
+                    child: Text(cancelLabel, style: context.typography.sans(fontWeight: FontWeight.w600, color: context.colors.muted)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -42,10 +42,10 @@ Future<bool> showConfirmationDialog(
                   child: FilledButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: FilledButton.styleFrom(
-                      backgroundColor: destructive ? AppColors.orangeDeep : AppColors.orange,
+                      backgroundColor: destructive ? context.colors.orangeDeep : context.colors.orange,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text(confirmLabel, style: AppTypography.sans(fontWeight: FontWeight.w700, color: Colors.white)),
+                    child: Text(confirmLabel, style: context.typography.sans(fontWeight: FontWeight.w700, color: Colors.white)),
                   ),
                 ),
               ],

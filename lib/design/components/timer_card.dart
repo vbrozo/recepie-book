@@ -25,9 +25,9 @@ class TimerCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: context.colors.hairline),
       ),
       child: Row(
         children: [
@@ -40,8 +40,8 @@ class TimerCard extends StatelessWidget {
                 CircularProgressIndicator(
                   value: progress.clamp(0, 1),
                   strokeWidth: 3,
-                  backgroundColor: AppColors.hairline,
-                  valueColor: const AlwaysStoppedAnimation(AppColors.orange),
+                  backgroundColor: context.colors.hairline,
+                  valueColor: AlwaysStoppedAnimation(context.colors.orange),
                 ),
               ],
             ),
@@ -53,14 +53,14 @@ class TimerCard extends StatelessWidget {
               children: [
                 Text(
                   timeLabel,
-                  style: AppTypography.sans(
+                  style: context.typography.sans(
                     fontSize: 26,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
+                    color: context.colors.ink,
                     letterSpacing: 0.5,
                   ),
                 ),
-                Text(label, style: AppTypography.sans(fontSize: 12, color: AppColors.muted)),
+                Text(label, style: context.typography.sans(fontSize: 12, color: context.colors.muted)),
               ],
             ),
           ),
@@ -69,7 +69,7 @@ class TimerCard extends StatelessWidget {
             child: Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(color: AppColors.orange, shape: BoxShape.circle),
+              decoration: BoxDecoration(color: context.colors.orange, shape: BoxShape.circle),
               child: Icon(isRunning ? Icons.pause : Icons.play_arrow, color: Colors.white),
             ),
           ),

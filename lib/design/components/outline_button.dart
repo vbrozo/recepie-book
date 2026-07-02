@@ -33,11 +33,11 @@ class OutlineButton extends StatelessWidget {
         child: OutlinedButton(
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: AppColors.outlineButtonBorder, width: 1.5),
+            side: BorderSide(color: context.colors.outlineButtonBorder, width: 1.5),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.buttonRadius)),
             padding: EdgeInsets.zero,
           ),
-          child: Icon(icon, color: AppColors.ink, size: 20),
+          child: Icon(icon, color: context.colors.ink, size: 20),
         ),
       );
     }
@@ -47,7 +47,7 @@ class OutlineButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.outlineButtonBorder, width: 1.5),
+          side: BorderSide(color: context.colors.outlineButtonBorder, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.buttonRadius)),
         ),
         child: Row(
@@ -55,10 +55,10 @@ class OutlineButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 20, color: AppColors.ink),
+              Icon(icon, size: 20, color: context.colors.ink),
               const SizedBox(width: 8),
             ],
-            Text(label, style: AppTypography.sans(fontWeight: FontWeight.w700, color: AppColors.ink, fontSize: 16)),
+            Text(label, style: context.typography.sans(fontWeight: FontWeight.w700, color: context.colors.ink, fontSize: 16)),
           ],
         ),
       ),

@@ -6,29 +6,40 @@ import 'app_colors.dart';
 /// Headings/recipe titles use Newsreader (serif); UI/body/labels use
 /// Hanken Grotesque (sans). Both support Croatian diacritics via Google
 /// Fonts' latin-ext subset.
+///
+/// Bound to a specific [AppColorPalette] so default text colors
+/// (`color` left unset) resolve to the right ink/muted tone for the
+/// current light/dark mode. Access via `context.typography.serif(...)` —
+/// the [AppTypographyContext] extension below — rather than constructing
+/// this directly, except in `app.dart` where both the light and dark
+/// `ThemeData.textTheme` are built up front from [AppColorPalette.light]
+/// and [AppColorPalette.dark] before any widget (and thus any context)
+/// exists yet.
 class AppTypography {
-  AppTypography._();
+  const AppTypography(this.colors);
 
-  static TextStyle serif({
+  final AppColorPalette colors;
+
+  TextStyle serif({
     double fontSize = 18,
     FontWeight fontWeight = FontWeight.w500,
-    Color color = AppColors.ink,
+    Color? color,
     double? height,
     double? letterSpacing,
   }) {
     return GoogleFonts.newsreader(
       fontSize: fontSize,
       fontWeight: fontWeight,
-      color: color,
+      color: color ?? colors.ink,
       height: height,
       letterSpacing: letterSpacing,
     );
   }
 
-  static TextStyle sans({
+  TextStyle sans({
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.w400,
-    Color color = AppColors.inkSecondary,
+    Color? color,
     double? height,
     double? letterSpacing,
     TextDecoration? decoration,
@@ -36,7 +47,7 @@ class AppTypography {
     return GoogleFonts.hankenGrotesk(
       fontSize: fontSize,
       fontWeight: fontWeight,
-      color: color,
+      color: color ?? colors.inkSecondary,
       height: height,
       letterSpacing: letterSpacing,
       decoration: decoration,
@@ -44,30 +55,37 @@ class AppTypography {
   }
 
   /// Uppercase eyebrow labels ("KORAK 1 OD 6", "NAZIV RECEPTA").
-  static TextStyle eyebrow({Color color = AppColors.muted}) {
+  TextStyle eyebrow({Color? color}) {
     return sans(
       fontSize: 13,
       fontWeight: FontWeight.w700,
-      color: color,
+      color: color ?? colors.muted,
       letterSpacing: 0.6,
     );
   }
 
-  static TextTheme textTheme() {
+  TextTheme textTheme() {
     return TextTheme(
       displaySmall: serif(fontSize: 44),
       headlineLarge: serif(fontSize: 34),
       headlineMedium: serif(fontSize: 30),
       headlineSmall: serif(fontSize: 24),
-      titleLarge: serif(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink),
-      titleMedium: sans(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.ink),
-      titleSmall: sans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
-      bodyLarge: sans(fontSize: 16, color: AppColors.inkSecondary),
-      bodyMedium: sans(fontSize: 14, color: AppColors.inkSecondary),
-      bodySmall: sans(fontSize: 13, color: AppColors.muted),
+      titleLarge: serif(fontSize: 19, fontWeight: FontWeight.w700, color: colors.ink),
+      titleMedium: sans(fontSize: 16, fontWeight: FontWeight.w600, color: colors.ink),
+      titleSmall: sans(fontSize: 14, fontWeight: FontWeight.w600, color: colors.ink),
+      bodyLarge: sans(fontSize: 16, color: colors.inkSecondary),
+      bodyMedium: sans(fontSize: 14, color: colors.inkSecondary),
+      bodySmall: sans(fontSize: 13, color: colors.muted),
       labelLarge: sans(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-      labelMedium: sans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
-      labelSmall: sans(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted),
+      labelMedium: sans(fontSize: 14, fontWeight: FontWeight.w600, color: colors.ink),
+      labelSmall: sans(fontSize: 11, fontWeight: FontWeight.w600, color: colors.muted),
     );
   }
+}
+
+/// `context.typography.serif(...)` / `.sans(...)` — bound to whichever
+/// [AppColorPalette] is active for the current theme, so unset `color`
+/// arguments default to the right tone automatically.
+extension AppTypographyContext on BuildContext {
+  AppTypography get typography => AppTypography(colors);
 }

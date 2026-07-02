@@ -21,7 +21,7 @@ class ShoppingListScreen extends ConsumerWidget {
     final pending = state.items.where((item) => !item.isChecked).length;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -34,21 +34,21 @@ class ShoppingListScreen extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Shopping lista', style: AppTypography.serif(fontSize: 34)),
+                      Text('Shopping lista', style: context.typography.serif(fontSize: 34)),
                       if (state.hasCompleted)
                         TextButton(
                           onPressed: notifier.clearCompleted,
-                          child: Text('Očisti', style: AppTypography.sans(fontWeight: FontWeight.w600, color: AppColors.orange)),
+                          child: Text('Očisti', style: context.typography.sans(fontWeight: FontWeight.w600, color: context.colors.orange)),
                         ),
                     ],
                   ),
                   Text(
                     state.items.isEmpty ? 'Lista je prazna' : '$pending od ${state.items.length} preostalo',
-                    style: AppTypography.sans(fontSize: 13, color: AppColors.muted),
+                    style: context.typography.sans(fontSize: 13, color: context.colors.muted),
                   ),
                   if (state.errorMessage != null) ...[
                     const SizedBox(height: 8),
-                    Text(state.errorMessage!, style: AppTypography.sans(color: AppColors.orangeDeep, fontSize: 13)),
+                    Text(state.errorMessage!, style: context.typography.sans(color: context.colors.orangeDeep, fontSize: 13)),
                   ],
                 ],
               ),
@@ -76,10 +76,10 @@ class ShoppingListScreen extends ConsumerWidget {
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Text(
                                   category.toUpperCase(),
-                                  style: AppTypography.sans(
+                                  style: context.typography.sans(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.muted,
+                                    color: context.colors.muted,
                                     letterSpacing: 0.6,
                                   ),
                                 ),
@@ -87,9 +87,9 @@ class ShoppingListScreen extends ConsumerWidget {
                               Container(
                                 margin: const EdgeInsets.only(bottom: 20),
                                 decoration: BoxDecoration(
-                                  color: AppColors.surface,
+                                  color: context.colors.surface,
                                   borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(color: AppColors.hairline),
+                                  border: Border.all(color: context.colors.hairline),
                                 ),
                                 child: Column(
                                   children: [
@@ -129,11 +129,11 @@ class _AddItemAffordance extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.faintAlt),
+          border: Border.all(color: context.colors.faintAlt),
         ),
         child: Text(
           '+ Dodaj namirnicu',
-          style: AppTypography.sans(fontWeight: FontWeight.w600, color: AppColors.orangeDeep),
+          style: context.typography.sans(fontWeight: FontWeight.w600, color: context.colors.orangeDeep),
         ),
       ),
     );

@@ -89,7 +89,7 @@ class _CookModeScreenState extends ConsumerState<CookModeScreen> {
 
     if (item == null || item.steps.isEmpty) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.colors.background,
         body: Center(
           child: TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Nema koraka za ovaj recept.')),
         ),
@@ -108,7 +108,7 @@ class _CookModeScreenState extends ConsumerState<CookModeScreen> {
     final seconds = (_remaining.inSeconds % 60).toString().padLeft(2, '0');
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -117,25 +117,25 @@ class _CookModeScreenState extends ConsumerState<CookModeScreen> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  IconButton(icon: const Icon(Icons.close, color: AppColors.ink), onPressed: () => Navigator.of(context).pop()),
+                  IconButton(icon: Icon(Icons.close, color: context.colors.ink), onPressed: () => Navigator.of(context).pop()),
                   Expanded(
                     child: Text(
                       item.recipe.title,
                       textAlign: TextAlign.center,
-                      style: AppTypography.sans(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.muted),
+                      style: context.typography.sans(fontSize: 15, fontWeight: FontWeight.w600, color: context.colors.muted),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(color: AppColors.oliveSoft, borderRadius: BorderRadius.circular(20)),
+                    decoration: BoxDecoration(color: context.colors.oliveSoft, borderRadius: BorderRadius.circular(20)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.brightness_high, size: 14, color: AppColors.olive),
+                        Icon(Icons.brightness_high, size: 14, color: context.colors.olive),
                         const SizedBox(width: 4),
-                        Text('Ekran uključen', style: AppTypography.sans(fontSize: 11, color: AppColors.olive)),
+                        Text('Ekran uključen', style: context.typography.sans(fontSize: 11, color: context.colors.olive)),
                       ],
                     ),
                   ),
@@ -144,9 +144,9 @@ class _CookModeScreenState extends ConsumerState<CookModeScreen> {
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Text('Korak ${_stepIndex + 1}', style: AppTypography.sans(fontWeight: FontWeight.w700, color: AppColors.orange)),
+                  Text('Korak ${_stepIndex + 1}', style: context.typography.sans(fontWeight: FontWeight.w700, color: context.colors.orange)),
                   const SizedBox(width: 4),
-                  Text('od ${steps.length}', style: AppTypography.sans(color: AppColors.muted)),
+                  Text('od ${steps.length}', style: context.typography.sans(color: context.colors.muted)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -158,7 +158,7 @@ class _CookModeScreenState extends ConsumerState<CookModeScreen> {
                         height: 6,
                         margin: EdgeInsets.only(right: i == steps.length - 1 ? 0 : 4),
                         decoration: BoxDecoration(
-                          color: i <= _stepIndex ? AppColors.orange : AppColors.hairline,
+                          color: i <= _stepIndex ? context.colors.orange : context.colors.hairline,
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
@@ -170,7 +170,7 @@ class _CookModeScreenState extends ConsumerState<CookModeScreen> {
                   child: Text(
                     step.instruction,
                     textAlign: TextAlign.center,
-                    style: AppTypography.serif(fontSize: 33, height: 1.28),
+                    style: context.typography.serif(fontSize: 33, height: 1.28),
                   ),
                 ),
               ),

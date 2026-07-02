@@ -20,7 +20,7 @@ class TagsScreen extends ConsumerWidget {
     final tags = ref.watch(tagListProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,7 +30,7 @@ class TagsScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
-                  Text('Tagovi', style: AppTypography.sans(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.ink)),
+                  Text('Tagovi', style: context.typography.sans(fontSize: 16, fontWeight: FontWeight.w600, color: context.colors.ink)),
                 ],
               ),
             ),
@@ -46,17 +46,17 @@ class TagsScreen extends ConsumerWidget {
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: context.colors.surface,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.hairline),
+                            border: Border.all(color: context.colors.hairline),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.label_outline, size: 18, color: AppColors.olive),
+                              Icon(Icons.label_outline, size: 18, color: context.colors.olive),
                               const SizedBox(width: 10),
-                              Expanded(child: Text(tag.name, style: AppTypography.sans(fontSize: 15, color: AppColors.ink))),
+                              Expanded(child: Text(tag.name, style: context.typography.sans(fontSize: 15, color: context.colors.ink))),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.orangeDeep),
+                                icon: Icon(Icons.delete_outline, size: 20, color: context.colors.orangeDeep),
                                 onPressed: () => _confirmDelete(context, ref, tag.id, tag.name),
                               ),
                             ],

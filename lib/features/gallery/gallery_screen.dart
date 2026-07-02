@@ -34,7 +34,7 @@ class GalleryScreen extends ConsumerWidget {
     }
 
     if (item == null) {
-      return const Scaffold(backgroundColor: AppColors.background, body: SizedBox.shrink());
+      return Scaffold(backgroundColor: context.colors.background, body: const SizedBox.shrink());
     }
 
     final images = item.images;
@@ -45,7 +45,7 @@ class GalleryScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,15 +55,15 @@ class GalleryScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
-                  Text('Galerija', style: AppTypography.sans(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                  Text('Galerija', style: context.typography.sans(fontSize: 17, fontWeight: FontWeight.w700, color: context.colors.ink)),
                   const Spacer(),
-                  Text('${images.length} slika', style: AppTypography.sans(fontSize: 13, color: AppColors.muted)),
+                  Text('${images.length} slika', style: context.typography.sans(fontSize: 13, color: context.colors.muted)),
                 ],
               ),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 56),
-              child: Text(item.recipe.title, style: AppTypography.serif(fontSize: 16)),
+              child: Text(item.recipe.title, style: context.typography.serif(fontSize: 16)),
             ),
             Expanded(
               child: images.isEmpty
@@ -100,7 +100,7 @@ class GalleryScreen extends ConsumerWidget {
                 child: Center(
                   child: Text(
                     'Dodir otvara sliku preko cijelog ekrana',
-                    style: AppTypography.sans(fontSize: 12, color: AppColors.faint),
+                    style: context.typography.sans(fontSize: 12, color: context.colors.faint),
                   ),
                 ),
               ),

@@ -13,7 +13,7 @@ Future<T?> showAppBottomSheet<T>(
 }) {
   return showModalBottomSheet<T>(
     context: context,
-    backgroundColor: AppColors.background,
+    backgroundColor: context.colors.background,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.sheetRadius)),
@@ -30,10 +30,10 @@ Future<T?> showAppBottomSheet<T>(
                 width: 40,
                 height: 5,
                 margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(color: AppColors.hairline, borderRadius: BorderRadius.circular(3)),
+                decoration: BoxDecoration(color: context.colors.hairline, borderRadius: BorderRadius.circular(3)),
               ),
             ),
-            Text(title, style: AppTypography.sans(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+            Text(title, style: context.typography.sans(fontSize: 17, fontWeight: FontWeight.w700, color: context.colors.ink)),
             const SizedBox(height: 16),
             Builder(builder: builder),
           ],

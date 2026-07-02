@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -41,13 +41,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             Container(
               width: 108,
               height: 108,
-              decoration: BoxDecoration(color: AppColors.orangeSoft, borderRadius: BorderRadius.circular(34)),
-              child: const Icon(Icons.ramen_dining_outlined, size: 48, color: AppColors.orange),
+              decoration: BoxDecoration(color: context.colors.orangeSoft, borderRadius: BorderRadius.circular(34)),
+              child: Icon(Icons.ramen_dining_outlined, size: 48, color: context.colors.orange),
             ),
             const SizedBox(height: 20),
-            Text('Kuharica', style: AppTypography.serif(fontSize: 44)),
+            Text('Kuharica', style: context.typography.serif(fontSize: 44)),
             const SizedBox(height: 8),
-            Text('Tvoja osobna zbirka recepata', style: AppTypography.sans(fontSize: 16, color: AppColors.mutedAlt)),
+            Text('Tvoja osobna zbirka recepata', style: context.typography.sans(fontSize: 16, color: context.colors.mutedAlt)),
             const SizedBox(height: 64),
             _PulsingDots(controller: _controller),
           ],
@@ -83,7 +83,7 @@ class _PulsingDots extends StatelessWidget {
                   child: Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(color: AppColors.orange, shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: context.colors.orange, shape: BoxShape.circle),
                   ),
                 ),
               ),
