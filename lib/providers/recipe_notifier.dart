@@ -125,6 +125,30 @@ class RecipeNotifier extends StateNotifier<RecipeState> {
     }
   }
 
+  void setFavoritesOnly(bool value) {
+    state = state.copyWith(favoritesOnly: value);
+  }
+
+  void setTagFilter(String? tagId) {
+    state = tagId == null
+        ? state.copyWith(clearTagFilter: true)
+        : state.copyWith(tagFilterId: tagId);
+  }
+
+  void setMaxPrepTime(int? minutes) {
+    state = minutes == null
+        ? state.copyWith(clearMaxPrepTime: true)
+        : state.copyWith(maxPrepTimeMinutes: minutes);
+  }
+
+  void clearFilters() {
+    state = state.copyWith(
+      favoritesOnly: false,
+      clearTagFilter: true,
+      clearMaxPrepTime: true,
+    );
+  }
+
   Future<void> _refresh() {
     return state.isSearching
         ? searchRecipes(state.searchQuery)

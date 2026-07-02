@@ -9,8 +9,10 @@ import '../../models/recipe.dart';
 import '../../models/recipe_image.dart';
 import '../../models/recipe_step.dart';
 import '../../models/recipe_with_details.dart';
+import '../../models/tag.dart';
 import '../../providers/image_storage_provider.dart';
 import '../../providers/recipe_list_provider.dart';
+import '../../providers/tag_list_provider.dart';
 import 'widgets/image_form_item.dart';
 import 'widgets/image_form_thumbnail.dart';
 import 'widgets/ingredient_form_row.dart';
@@ -41,6 +43,8 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
   final List<IngredientFormRow> _ingredientRows = [];
   final List<StepFormRow> _stepRows = [];
   final List<ImageFormItem> _imageItems = [];
+  final List<Tag> _selectedTags = [];
+  final _tagInputController = TextEditingController();
 
   String? _primaryImageId;
   bool _isSaving = false;
@@ -95,6 +99,8 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
     if (_primaryImageId == null && _imageItems.isNotEmpty) {
       _primaryImageId = _imageItems.first.id;
     }
+
+    _selectedTags.addAll(widget.existing?.tags ?? const []);
   }
 
   @override
@@ -110,6 +116,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
     for (final row in _stepRows) {
       row.dispose();
     }
+    _tagInputController.dispose();
     super.dispose();
   }
 
@@ -159,6 +166,32 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
 
   void _setPrimaryImage(String id) {
     setState(() => _primaryImageId = id);
+  }
+
+  Future<void> _addTagByName(String rawName) async {
+    final name = rawName.trim();
+    if (name.isEmpty) return;
+
+    if (_selectedTags.any((tag) => tag.name.toLowerCase() == name.toLowerCase())) {
+      _tagInputController.clear();
+      return;
+    }
+
+    final tag = await ref.read(tagListProvider.notifier).getOrCreateTag(name);
+    if (!mounted) return;
+    setState(() {
+      _selectedTags.add(tag);
+      _tagInputController.clear();
+    });
+  }
+
+  void _addExistingTag(Tag tag) {
+    if (_selectedTags.any((selected) => selected.id == tag.id)) return;
+    setState(() => _selectedTags.add(tag));
+  }
+
+  void _removeTag(Tag tag) {
+    setState(() => _selectedTags.removeWhere((selected) => selected.id == tag.id));
   }
 
   Future<void> _save() async {
@@ -259,9 +292,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
         .where((path) => !keptExistingPaths.contains(path));
     await imageStorage.deleteImages(removedPaths);
 
-    // Tags aren't editable from this screen yet — keep whatever the recipe
-    // already had so updateRecipe's wholesale-replace doesn't drop them.
-    final tagIds = widget.existing?.tags.map((tag) => tag.id).toList() ?? const <String>[];
+    final tagIds = _selectedTags.map((tag) => tag.id).toList();
 
     final notifier = ref.read(recipeListProvider.notifier);
     if (_isEditing) {
@@ -334,6 +365,58 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 24),
+            Text('Tagovi', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            if (_selectedTags.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final tag in _selectedTags)
+                    Chip(
+                      label: Text(tag.name),
+                      onDeleted: () => _removeTag(tag),
+                    ),
+                ],
+              ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _tagInputController,
+              decoration: InputDecoration(
+                labelText: 'Novi tag',
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () => _addTagByName(_tagInputController.text),
+                ),
+              ),
+              textInputAction: TextInputAction.done,
+              onSubmitted: _addTagByName,
+            ),
+            Consumer(
+              builder: (context, ref, _) {
+                final allTags = ref.watch(tagListProvider);
+                final available = allTags
+                    .where((tag) => !_selectedTags.any((selected) => selected.id == tag.id))
+                    .toList();
+                if (available.isEmpty) return const SizedBox.shrink();
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      for (final tag in available)
+                        ActionChip(
+                          label: Text(tag.name),
+                          onPressed: () => _addExistingTag(tag),
+                        ),
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
             Row(

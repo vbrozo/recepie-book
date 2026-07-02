@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'features/recipe_detail/recipe_detail_screen.dart';
 import 'features/recipe_form/recipe_form_screen.dart';
 import 'features/recipe_list/recipe_list_screen.dart';
+import 'features/tags/tags_screen.dart';
 import 'models/recipe_with_details.dart';
 
 final _router = GoRouter(
@@ -28,6 +29,10 @@ final _router = GoRouter(
       builder: (context, state) => RecipeFormScreen(
         existing: state.extra as RecipeWithDetails?,
       ),
+    ),
+    GoRoute(
+      path: '/tags',
+      builder: (context, state) => const TagsScreen(),
     ),
   ],
 );
