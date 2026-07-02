@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/storage/image_storage_service.dart';
 import '../../models/recipe_with_details.dart';
+import '../../providers/image_storage_provider.dart';
 import '../../providers/recipe_list_provider.dart';
 import '../../providers/recipe_notifier.dart';
+import '../../widgets/recipe_image_thumbnail.dart';
 
 class RecipeDetailScreen extends ConsumerWidget {
   const RecipeDetailScreen({super.key, required this.recipeId});
@@ -54,7 +57,12 @@ class RecipeDetailScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            onPressed: () => _confirmDelete(context, notifier, recipe.id),
+            onPressed: () => _confirmDelete(
+              context,
+              notifier,
+              ref.read(imageStorageServiceProvider),
+              recipe.id,
+            ),
           ),
         ],
       ),
@@ -74,6 +82,21 @@ class RecipeDetailScreen extends ConsumerWidget {
               if (recipe.cookTimeMinutes != null) _MetaChip(icon: Icons.local_fire_department, label: 'Kuhanje ${recipe.cookTimeMinutes} min'),
             ],
           ),
+          if (item.images.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 96,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: item.images.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 8),
+                itemBuilder: (context, index) => RecipeImageThumbnail(
+                  relativePath: item.images[index].filePath,
+                  size: 96,
+                ),
+              ),
+            ),
+          ],
           if (item.tags.isNotEmpty) ...[
             const SizedBox(height: 16),
             Wrap(
@@ -134,6 +157,7 @@ class RecipeDetailScreen extends ConsumerWidget {
   Future<void> _confirmDelete(
     BuildContext context,
     RecipeNotifier notifier,
+    ImageStorageService imageStorage,
     String id,
   ) async {
     final confirmed = await showDialog<bool>(
@@ -150,10 +174,8 @@ class RecipeDetailScreen extends ConsumerWidget {
 
     if (confirmed != true) return;
 
-    // TODO: once ImageStorageService exists, delete the returned file paths
-    // (recipe_images.file_path) from disk here — the repository/DB only
-    // own the rows, not the physical files (see ARCHITECTURE.md §5).
-    await notifier.deleteRecipe(id);
+    final imagePaths = await notifier.deleteRecipe(id);
+    await imageStorage.deleteImages(imagePaths);
 
     if (context.mounted) context.pop();
   }

@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../models/ingredient.dart';
 import '../../models/recipe.dart';
+import '../../models/recipe_image.dart';
 import '../../models/recipe_step.dart';
 import '../../models/recipe_with_details.dart';
+import '../../providers/image_storage_provider.dart';
 import '../../providers/recipe_list_provider.dart';
+import 'widgets/image_form_item.dart';
+import 'widgets/image_form_thumbnail.dart';
 import 'widgets/ingredient_form_row.dart';
 import 'widgets/step_form_row.dart';
 
@@ -35,7 +40,9 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
 
   final List<IngredientFormRow> _ingredientRows = [];
   final List<StepFormRow> _stepRows = [];
+  final List<ImageFormItem> _imageItems = [];
 
+  String? _coverImageId;
   bool _isSaving = false;
 
   bool get _isEditing => widget.existing != null;
@@ -77,6 +84,17 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
         ));
       }
     }
+
+    final existingImages = widget.existing?.images ?? const [];
+    for (final image in existingImages) {
+      _imageItems.add(ImageFormItem.existing(id: image.id, relativePath: image.filePath));
+      if (image.isCover) {
+        _coverImageId = image.id;
+      }
+    }
+    if (_coverImageId == null && _imageItems.isNotEmpty) {
+      _coverImageId = _imageItems.first.id;
+    }
   }
 
   @override
@@ -115,6 +133,32 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       _stepRows[index].dispose();
       _stepRows.removeAt(index);
     });
+  }
+
+  Future<void> _pickImages() async {
+    final files = await ImagePicker().pickMultiImage();
+    if (files.isEmpty) return;
+
+    setState(() {
+      for (final file in files) {
+        final item = ImageFormItem.picked(id: _uuid.v4(), file: file);
+        _imageItems.add(item);
+        _coverImageId ??= item.id;
+      }
+    });
+  }
+
+  void _removeImageRow(int index) {
+    setState(() {
+      final removed = _imageItems.removeAt(index);
+      if (_coverImageId == removed.id) {
+        _coverImageId = _imageItems.isNotEmpty ? _imageItems.first.id : null;
+      }
+    });
+  }
+
+  void _setCoverImage(String id) {
+    setState(() => _coverImageId = id);
   }
 
   Future<void> _save() async {
@@ -182,10 +226,41 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
         ),
     ];
 
-    // Images and tags aren't editable from this screen yet — keep whatever
-    // the recipe already had so updateRecipe's wholesale-replace doesn't
-    // silently drop them.
-    final images = widget.existing?.images ?? const [];
+    final imageStorage = ref.read(imageStorageServiceProvider);
+    final images = <RecipeImage>[];
+    for (var i = 0; i < _imageItems.length; i++) {
+      final item = _imageItems[i];
+      final relativePath = item.existingRelativePath ??
+          await imageStorage.saveImage(
+            recipeId: recipeId,
+            imageId: item.id,
+            sourcePath: item.pickedFile!.path,
+          );
+      images.add(RecipeImage(
+        id: item.id,
+        recipeId: recipeId,
+        filePath: relativePath,
+        isCover: item.id == _coverImageId,
+        sortOrder: i,
+        createdAt: now,
+        updatedAt: now,
+      ));
+    }
+
+    // Delete files for images that were removed from an existing recipe —
+    // the DB row already gets replaced by updateRecipe, but the physical
+    // file is this screen's responsibility to clean up.
+    final keptExistingPaths = _imageItems
+        .map((item) => item.existingRelativePath)
+        .whereType<String>()
+        .toSet();
+    final removedPaths = (widget.existing?.images ?? const [])
+        .map((image) => image.filePath)
+        .where((path) => !keptExistingPaths.contains(path));
+    await imageStorage.deleteImages(removedPaths);
+
+    // Tags aren't editable from this screen yet — keep whatever the recipe
+    // already had so updateRecipe's wholesale-replace doesn't drop them.
     final tagIds = widget.existing?.tags.map((tag) => tag.id).toList() ?? const <String>[];
 
     final notifier = ref.read(recipeListProvider.notifier);
@@ -260,6 +335,32 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Slike', style: Theme.of(context).textTheme.titleMedium),
+                IconButton(
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  onPressed: _pickImages,
+                ),
+              ],
+            ),
+            if (_imageItems.isNotEmpty)
+              SizedBox(
+                height: 96,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _imageItems.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) => ImageFormThumbnail(
+                    item: _imageItems[index],
+                    isCover: _imageItems[index].id == _coverImageId,
+                    onSetCover: () => _setCoverImage(_imageItems[index].id),
+                    onRemove: () => _removeImageRow(index),
+                  ),
+                ),
+              ),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
