@@ -17,6 +17,14 @@ class RecipeVersionRepository {
 
   final DatabaseHelper _dbHelper;
 
+  /// Version history is capped per recipe — old snapshots are pruned as
+  /// soon as this is exceeded (see [createVersion]) so a long-lived recipe
+  /// doesn't accumulate an ever-growing `recipe_versions` table. Images
+  /// aren't affected either way: a version's snapshot never stores images
+  /// (see RecipeSnapshot) — restoring an old version keeps whatever images
+  /// the recipe currently has, so pruning old versions can't touch them.
+  static const maxVersionsPerRecipe = 10;
+
   Future<List<RecipeVersion>> getVersionsForRecipe(String recipeId) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
@@ -58,6 +66,25 @@ class RecipeVersionRepository {
       );
 
       await txn.insert('recipe_versions', version.toMap());
+
+      // Keep only the most recent [maxVersionsPerRecipe] rows for this
+      // recipe. Version numbers themselves keep incrementing forever
+      // (unaffected by what gets pruned) — only how many old rows we keep
+      // around is capped.
+      await txn.rawDelete(
+        '''
+        DELETE FROM recipe_versions
+        WHERE recipe_id = ?
+          AND id NOT IN (
+            SELECT id FROM recipe_versions
+            WHERE recipe_id = ?
+            ORDER BY version_number DESC
+            LIMIT ?
+          )
+        ''',
+        [recipe.recipe.id, recipe.recipe.id, maxVersionsPerRecipe],
+      );
+
       return version;
     });
   }

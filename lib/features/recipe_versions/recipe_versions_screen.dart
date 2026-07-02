@@ -92,7 +92,15 @@ class RecipeVersionsScreen extends ConsumerWidget {
                             final previous = index + 1 < versions.length ? versions[index + 1] : null;
                             final diff = computeVersionDiff(previous, version);
                             final isActive = index == 0;
-                            final isOriginal = previous == null;
+                            // versionNumber == 1 means this really is the
+                            // recipe's first-ever save; `previous == null`
+                            // alone isn't enough once old versions are
+                            // pruned (RecipeVersionRepository keeps only the
+                            // last 10) — the oldest *visible* version at
+                            // that point isn't the oldest one that ever
+                            // existed.
+                            final isFirstEver = version.versionNumber == 1;
+                            final isOldestVisible = previous == null;
 
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,9 +109,11 @@ class RecipeVersionsScreen extends ConsumerWidget {
                                   title: 'Verzija ${version.versionNumber}',
                                   dateLabel: _formatDate(version.createdAt),
                                   isActive: isActive,
-                                  note: isOriginal
+                                  note: isFirstEver
                                       ? (version.note ?? 'Prvi zapis recepta')
-                                      : version.note,
+                                      : isOldestVisible
+                                          ? (version.note ?? 'Najstarija sačuvana verzija')
+                                          : version.note,
                                   addedChips: diff.added,
                                   removedChips: diff.removed,
                                   onTap: isActive || current == null

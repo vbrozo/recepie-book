@@ -292,14 +292,20 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
 
     final imageStorage = ref.read(imageStorageServiceProvider);
     final images = <RecipeImage>[];
+    final newlySavedPaths = <String>[];
     for (var i = 0; i < _imageItems.length; i++) {
       final item = _imageItems[i];
-      final relativePath = item.existingRelativePath ??
-          await imageStorage.saveImage(
-            recipeId: recipeId,
-            imageId: item.id,
-            source: item.pickedFile!,
-          );
+      String relativePath;
+      if (item.existingRelativePath != null) {
+        relativePath = item.existingRelativePath!;
+      } else {
+        relativePath = await imageStorage.saveImage(
+          recipeId: recipeId,
+          imageId: item.id,
+          source: item.pickedFile!,
+        );
+        newlySavedPaths.add(relativePath);
+      }
       images.add(RecipeImage(
         id: item.id,
         recipeId: recipeId,
@@ -311,17 +317,20 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       ));
     }
 
-    // Delete files for images that were removed from an existing recipe —
-    // the DB row already gets replaced by updateRecipe, but the physical
-    // file is this screen's responsibility to clean up.
+    // Files for images removed from an existing recipe during this edit —
+    // computed now, but only actually deleted from disk once the DB write
+    // below has confirmed succeeded (see below). Deleting them earlier
+    // would risk broken image references if the save then failed: the DB
+    // row still points at the old path, but the file backing it would
+    // already be gone.
     final keptExistingPaths = _imageItems
         .map((item) => item.existingRelativePath)
         .whereType<String>()
         .toSet();
     final removedPaths = (widget.existing?.images ?? const [])
         .map((image) => image.filePath)
-        .where((path) => !keptExistingPaths.contains(path));
-    await imageStorage.deleteImages(removedPaths);
+        .where((path) => !keptExistingPaths.contains(path))
+        .toList();
 
     final tagIds = _selectedTags.map((tag) => tag.id).toList();
 
@@ -351,6 +360,13 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
     // if nothing happened while the recipe never actually got persisted.
     final saveError = ref.read(recipeListProvider).errorMessage;
     if (saveError != null) {
+      // The DB write failed, so the old recipe row (and its old image
+      // paths) is still what's persisted — clean up only the files that
+      // got copied to disk during this attempt (orphaned, unreferenced by
+      // any DB row now), and leave the removed-but-still-referenced ones
+      // alone.
+      await imageStorage.deleteImages(newlySavedPaths);
+
       // Also to the browser console — the SnackBar truncates/auto-dismisses
       // long messages, the console doesn't.
       debugPrint('[Kuharica] Recipe save failed: $saveError');
@@ -364,6 +380,10 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       );
       return;
     }
+
+    // Only now that the DB write is confirmed committed is it safe to
+    // remove the files for images the user dropped during this edit.
+    await imageStorage.deleteImages(removedPaths);
 
     // Every save (create or edit) becomes a new version — saving an edit
     // never silently overwrites the recipe's history.

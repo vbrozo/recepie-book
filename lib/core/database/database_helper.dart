@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
@@ -22,12 +22,25 @@ import 'migrations/migration_v1.dart';
 /// error), so don't reintroduce a remote URL here without testing it end
 /// to end in a real browser first.
 class DatabaseHelper {
-  DatabaseHelper._internal();
+  DatabaseHelper._internal({String? testDatabasePath}) : _testDatabasePath = testDatabasePath;
 
   static final DatabaseHelper instance = DatabaseHelper._internal();
 
+  /// A fresh, isolated instance backed by an in-memory SQLite database
+  /// (via `databaseFactory` — repository tests point it at
+  /// `sqflite_common_ffi`'s `databaseFactoryFfi` in `setUpAll`). Unlike
+  /// [instance], every call returns a brand new database, so tests don't
+  /// leak state into one another.
+  @visibleForTesting
+  factory DatabaseHelper.testing() => DatabaseHelper._internal(testDatabasePath: ':memory:');
+
   static const String _dbName = 'recipes_app.db';
   static const int _dbVersion = 1;
+
+  /// Non-null only for [DatabaseHelper.testing] instances — routes
+  /// [_initDatabase] straight to `openDatabase(':memory:', ...)` instead of
+  /// the platform-specific (native file / web wasm) paths below.
+  final String? _testDatabasePath;
 
   Database? _database;
   bool _webFactoryConfigured = false;
@@ -37,6 +50,22 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
+    if (_testDatabasePath != null) {
+      // singleInstance: false — sqflite otherwise caches one connection per
+      // path across the whole process, and every test uses the same
+      // ':memory:' path; without this, a second test's DatabaseHelper.testing()
+      // would hand back the first test's (already schema-initialized,
+      // possibly already-closed) database instead of a clean one.
+      return openDatabase(
+        _testDatabasePath,
+        version: _dbVersion,
+        onConfigure: _onConfigure,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+        singleInstance: false,
+      );
+    }
+
     if (kIsWeb) {
       _ensureWebFactory();
       // The web factory keys databases by name in IndexedDB — no
