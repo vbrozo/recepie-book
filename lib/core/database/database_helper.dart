@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -10,13 +12,15 @@ import 'migrations/migration_v1.dart';
 /// On web, sqflite has no built-in implementation, so this routes through
 /// sqflite_common_ffi_web (a real SQLite compiled to wasm, not an
 /// IndexedDB emulation — PRAGMA/foreign keys and the rest of migration_v1
-/// work unmodified). The wasm binary is intentionally loaded from its
-/// upstream GitHub release at runtime rather than vendored under web/,
-/// because this repo's build environment can't reach GitHub release
-/// assets to download it; an end user's browser loading the deployed
-/// GitHub Pages site has no such restriction. The matching shared-worker
-/// script (sqflite_sw.js) *is* vendored under web/, compiled locally with
-/// `dart compile js`.
+/// work unmodified). Both the wasm binary (web/sqlite3.wasm) and the
+/// matching shared-worker script (web/sqflite_sw.js, compiled locally with
+/// `dart compile js`) are vendored locally and served same-origin — an
+/// earlier version of this pointed sqlite3WasmUri at sqlite3.dart's GitHub
+/// release instead, which reliably failed at runtime (surfaced as
+/// "Unsupported operation: unsupported result null" — the worker silently
+/// swallowing a failed cross-origin wasm fetch instead of throwing a clear
+/// error), so don't reintroduce a remote URL here without testing it end
+/// to end in a real browser first.
 class DatabaseHelper {
   DatabaseHelper._internal();
 
@@ -24,12 +28,6 @@ class DatabaseHelper {
 
   static const String _dbName = 'recipes_app.db';
   static const int _dbVersion = 1;
-
-  /// Same release sqflite_common_ffi_web's own `setup` tool pins by
-  /// default (see sqlite3_wasm_version.dart in that package).
-  static final Uri _webSqlite3WasmUri = Uri.parse(
-    'https://github.com/simolus3/sqlite3.dart/releases/download/sqlite3-3.1.2/sqlite3.wasm',
-  );
 
   Database? _database;
   bool _webFactoryConfigured = false;
@@ -43,13 +41,28 @@ class DatabaseHelper {
       _ensureWebFactory();
       // The web factory keys databases by name in IndexedDB — no
       // filesystem path to resolve, unlike native platforms.
-      return openDatabase(
-        _dbName,
-        version: _dbVersion,
-        onConfigure: _onConfigure,
-        onCreate: _onCreate,
-        onUpgrade: _onUpgrade,
-      );
+      try {
+        return await openDatabase(
+          _dbName,
+          version: _dbVersion,
+          onConfigure: _onConfigure,
+          onCreate: _onCreate,
+          onUpgrade: _onUpgrade,
+        ).timeout(
+          const Duration(seconds: 20),
+          onTimeout: () => throw TimeoutException(
+            'Timed out loading sqlite3.wasm/sqflite_sw.js',
+          ),
+        );
+      } catch (error, stackTrace) {
+        // Re-wrapped with context: the wasm/shared-worker bridge fails in
+        // ways ("Uncaught Error" with no message) that are otherwise
+        // impossible to distinguish from any other DB error in the UI.
+        Error.throwWithStackTrace(
+          Exception('Web SQLite (sqlite3.wasm via sqflite_common_ffi_web) failed to initialize: $error'),
+          stackTrace,
+        );
+      }
     }
 
     final path = join(await getDatabasesPath(), _dbName);
@@ -66,9 +79,10 @@ class DatabaseHelper {
   void _ensureWebFactory() {
     if (_webFactoryConfigured) return;
     _webFactoryConfigured = true;
-    databaseFactory = createDatabaseFactoryFfiWeb(
-      options: SqfliteFfiWebOptions(sqlite3WasmUri: _webSqlite3WasmUri),
-    );
+    // No explicit options: defaults to the same-origin relative paths
+    // 'sqlite3.wasm' and 'sqflite_sw.js' (resolved against <base href>),
+    // both vendored under web/.
+    databaseFactory = createDatabaseFactoryFfiWeb();
   }
 
   Future<void> _onConfigure(Database db) async {

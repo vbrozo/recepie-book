@@ -343,10 +343,16 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
     // if nothing happened while the recipe never actually got persisted.
     final saveError = ref.read(recipeListProvider).errorMessage;
     if (saveError != null) {
+      // Also to the browser console — the SnackBar truncates/auto-dismisses
+      // long messages, the console doesn't.
+      debugPrint('[Kuharica] Recipe save failed: $saveError');
       if (!mounted) return;
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Recept nije spremljen: $saveError')),
+        SnackBar(
+          content: Text('Recept nije spremljen: $saveError'),
+          duration: const Duration(seconds: 10),
+        ),
       );
       return;
     }
