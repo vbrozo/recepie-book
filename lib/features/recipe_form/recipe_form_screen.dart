@@ -155,7 +155,15 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
   }
 
   Future<void> _pickImages() async {
-    final files = await ImagePicker().pickMultiImage();
+    // Downscaled at the source: on web the picked bytes are stored inline
+    // as a base64 `data:` URL (see ImageStorageService), so an un-resized
+    // photo straight off a phone camera would bloat every recipe-list
+    // query and stay in memory for the lifetime of the app session.
+    final files = await ImagePicker().pickMultiImage(
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 82,
+    );
     if (files.isEmpty) return;
 
     setState(() {

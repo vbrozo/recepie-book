@@ -47,9 +47,7 @@ class RecipeRepository {
       orderBy: 'title COLLATE NOCASE ASC',
     );
 
-    return Future.wait(
-      recipeMaps.map((map) => _loadDetails(db, Recipe.fromMap(map))),
-    );
+    return _loadDetailsBatch(db, recipeMaps.map(Recipe.fromMap).toList());
   }
 
   Future<RecipeWithDetails?> getRecipeById(String id) async {
@@ -133,9 +131,7 @@ class RecipeRepository {
       orderBy: 'title COLLATE NOCASE ASC',
     );
 
-    return Future.wait(
-      recipeMaps.map((map) => _loadDetails(db, Recipe.fromMap(map))),
-    );
+    return _loadDetailsBatch(db, recipeMaps.map(Recipe.fromMap).toList());
   }
 
   /// Atomically flips `is_favorite` without a separate read.
@@ -177,6 +173,93 @@ class RecipeRepository {
         'created_at': DateTime.now().toIso8601String(),
       });
     }
+  }
+
+  /// SQLite caps the number of bound parameters per statement (historically
+  /// 999); chunking keeps `_loadDetailsBatch` correct even for very large
+  /// recipe collections instead of failing once someone has 1000+ recipes.
+  static const _maxSqliteVariables = 900;
+
+  /// Loads children for many recipes at once (4 batch queries total,
+  /// regardless of recipe count) instead of one round-trip per recipe —
+  /// [_loadDetails] alone would mean 4N queries for a list of N recipes.
+  Future<List<RecipeWithDetails>> _loadDetailsBatch(
+    DatabaseExecutor db,
+    List<Recipe> recipes,
+  ) async {
+    if (recipes.isEmpty) return const [];
+    if (recipes.length == 1) {
+      return [await _loadDetails(db, recipes.first)];
+    }
+
+    final ingredientsByRecipe = <String, List<Ingredient>>{};
+    final stepsByRecipe = <String, List<RecipeStep>>{};
+    final imagesByRecipe = <String, List<RecipeImage>>{};
+    final tagsByRecipe = <String, List<Tag>>{};
+
+    for (var offset = 0; offset < recipes.length; offset += _maxSqliteVariables) {
+      final chunk = recipes.skip(offset).take(_maxSqliteVariables);
+      final recipeIds = chunk.map((r) => r.id).toList();
+      final placeholders = List.filled(recipeIds.length, '?').join(',');
+
+      final ingredientMaps = await db.query(
+        'ingredients',
+        where: 'recipe_id IN ($placeholders)',
+        whereArgs: recipeIds,
+        orderBy: 'sort_order ASC',
+      );
+      final stepMaps = await db.query(
+        'recipe_steps',
+        where: 'recipe_id IN ($placeholders)',
+        whereArgs: recipeIds,
+        orderBy: 'step_number ASC',
+      );
+      final imageMaps = await db.query(
+        'recipe_images',
+        where: 'recipe_id IN ($placeholders)',
+        whereArgs: recipeIds,
+        orderBy: 'sort_order ASC',
+      );
+      final tagRows = await db.rawQuery(
+        '''
+        SELECT tags.*, recipe_tags.recipe_id AS recipe_id
+        FROM tags
+        INNER JOIN recipe_tags ON recipe_tags.tag_id = tags.id
+        WHERE recipe_tags.recipe_id IN ($placeholders)
+        ORDER BY tags.name COLLATE NOCASE ASC
+        ''',
+        recipeIds,
+      );
+
+      ingredientsByRecipe.addAll(_groupByRecipeId(ingredientMaps, Ingredient.fromMap));
+      stepsByRecipe.addAll(_groupByRecipeId(stepMaps, RecipeStep.fromMap));
+      imagesByRecipe.addAll(_groupByRecipeId(imageMaps, RecipeImage.fromMap));
+      tagsByRecipe.addAll(_groupByRecipeId(tagRows, Tag.fromMap));
+    }
+
+    return recipes
+        .map((recipe) => RecipeWithDetails(
+              recipe: recipe,
+              ingredients: ingredientsByRecipe[recipe.id] ?? const [],
+              steps: stepsByRecipe[recipe.id] ?? const [],
+              images: imagesByRecipe[recipe.id] ?? const [],
+              tags: tagsByRecipe[recipe.id] ?? const [],
+            ))
+        .toList();
+  }
+
+  /// Groups flat query rows (each carrying a `recipe_id` column) back into
+  /// per-recipe lists, preserving row order within each group.
+  Map<String, List<T>> _groupByRecipeId<T>(
+    List<Map<String, Object?>> rows,
+    T Function(Map<String, Object?>) fromMap,
+  ) {
+    final result = <String, List<T>>{};
+    for (final row in rows) {
+      final recipeId = row['recipe_id'] as String;
+      (result[recipeId] ??= []).add(fromMap(row));
+    }
+    return result;
   }
 
   Future<RecipeWithDetails> _loadDetails(
