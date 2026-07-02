@@ -73,6 +73,7 @@ const List<String> migrationV1 = [
       id               TEXT PRIMARY KEY,
       recipe_id        TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
       version_number   INTEGER NOT NULL,
+      note             TEXT,
       snapshot_json    TEXT NOT NULL,
       created_at       TEXT NOT NULL,
       UNIQUE (recipe_id, version_number)

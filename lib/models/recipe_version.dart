@@ -4,6 +4,7 @@ class RecipeVersion {
   final String id;
   final String recipeId;
   final int versionNumber;
+  final String? note;
   final String snapshotJson;
   final DateTime createdAt;
 
@@ -11,6 +12,7 @@ class RecipeVersion {
     required this.id,
     required this.recipeId,
     required this.versionNumber,
+    this.note,
     required this.snapshotJson,
     required this.createdAt,
   });
@@ -19,6 +21,7 @@ class RecipeVersion {
     String? id,
     String? recipeId,
     int? versionNumber,
+    String? note,
     String? snapshotJson,
     DateTime? createdAt,
   }) {
@@ -26,6 +29,7 @@ class RecipeVersion {
       id: id ?? this.id,
       recipeId: recipeId ?? this.recipeId,
       versionNumber: versionNumber ?? this.versionNumber,
+      note: note ?? this.note,
       snapshotJson: snapshotJson ?? this.snapshotJson,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -36,6 +40,7 @@ class RecipeVersion {
       id: map['id'] as String,
       recipeId: map['recipe_id'] as String,
       versionNumber: map['version_number'] as int,
+      note: map['note'] as String?,
       snapshotJson: map['snapshot_json'] as String,
       createdAt: DateTime.parse(map['created_at'] as String),
     );
@@ -46,6 +51,7 @@ class RecipeVersion {
       'id': id,
       'recipe_id': recipeId,
       'version_number': versionNumber,
+      'note': note,
       'snapshot_json': snapshotJson,
       'created_at': createdAt.toIso8601String(),
     };
@@ -56,6 +62,7 @@ class RecipeVersion {
       id: json['id'] as String,
       recipeId: json['recipe_id'] as String,
       versionNumber: json['version_number'] as int,
+      note: json['note'] as String?,
       snapshotJson: json['snapshot_json'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
@@ -66,6 +73,7 @@ class RecipeVersion {
       'id': id,
       'recipe_id': recipeId,
       'version_number': versionNumber,
+      'note': note,
       'snapshot_json': snapshotJson,
       'created_at': createdAt.toIso8601String(),
     };

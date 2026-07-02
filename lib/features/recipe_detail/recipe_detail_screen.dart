@@ -61,6 +61,11 @@ class RecipeDetailScreen extends ConsumerWidget {
             onPressed: () => notifier.toggleFavorite(recipe.id),
           ),
           IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Verzije',
+            onPressed: () => context.push('/recipe/${recipe.id}/versions'),
+          ),
+          IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () => context.push('/recipe/${recipe.id}/edit', extra: item),
           ),

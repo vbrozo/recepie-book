@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'features/recipe_detail/recipe_detail_screen.dart';
 import 'features/recipe_form/recipe_form_screen.dart';
 import 'features/recipe_list/recipe_list_screen.dart';
+import 'features/recipe_versions/recipe_versions_screen.dart';
 import 'features/shopping_list/shopping_list_screen.dart';
 import 'features/tags/tags_screen.dart';
 import 'models/recipe_with_details.dart';
@@ -29,6 +30,12 @@ final _router = GoRouter(
       path: '/recipe/:id/edit',
       builder: (context, state) => RecipeFormScreen(
         existing: state.extra as RecipeWithDetails?,
+      ),
+    ),
+    GoRoute(
+      path: '/recipe/:id/versions',
+      builder: (context, state) => RecipeVersionsScreen(
+        recipeId: state.pathParameters['id']!,
       ),
     ),
     GoRoute(

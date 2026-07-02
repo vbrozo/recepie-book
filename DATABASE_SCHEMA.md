@@ -118,11 +118,21 @@ immutable nakon insertanja.
 | id              | TEXT    | PRIMARY KEY                                          |
 | recipe_id       | TEXT    | NOT NULL, FK → recipes(id) ON DELETE CASCADE          |
 | version_number  | INTEGER | NOT NULL                                             |
+| note            | TEXT    | nullable — korisnička bilješka uz verziju             |
 | snapshot_json   | TEXT    | NOT NULL                                             |
 | created_at      | TEXT    | NOT NULL                                             |
 
 Indeksi: `recipe_id`. Dodatno: `UNIQUE(recipe_id, version_number)` da spriječi
 duplicirane brojeve verzija za isti recept.
+
+`snapshot_json` sadrži serijalizirani `Recipe` + `ingredients` + `steps` +
+`tags` u tom trenutku (JSON, vidi `RecipeSnapshot` u
+`lib/models/recipe_snapshot.dart`) — slike se ne verzioniraju jer su
+fizički fajlovi, ne sadržaj. `version_number` se računa kao
+`MAX(version_number) + 1` po receptu (`RecipeVersionRepository.createVersion`).
+Vraćanje stare verzije ide kroz `RecipeNotifier.updateRecipe` (isti wholesale-
+replace kao ručni edit) i prije toga automatski sprema trenutno stanje kao
+novu verziju, tako da vraćanje nikad nije "dead end".
 
 ## shopping_list_items
 
