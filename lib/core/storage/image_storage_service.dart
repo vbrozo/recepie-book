@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
@@ -24,17 +25,48 @@ class ImageStorageService {
     required String imageId,
     required XFile source,
   }) async {
+    final bytes = await source.readAsBytes();
+    final fileName = kIsWeb ? source.name : basename(source.path);
+    return saveImageBytes(
+      recipeId: recipeId,
+      imageId: imageId,
+      bytes: bytes,
+      originalFileName: fileName,
+    );
+  }
+
+  /// Same as [saveImage] but for raw bytes instead of a picker [XFile] —
+  /// used by [BackupService] when restoring images from an imported backup,
+  /// where there's no [XFile] (the bytes come out of a zip archive entry).
+  Future<String> saveImageBytes({
+    required String recipeId,
+    required String imageId,
+    required Uint8List bytes,
+    required String originalFileName,
+  }) async {
     if (kIsWeb) {
-      final bytes = await source.readAsBytes();
-      final mimeType = source.mimeType ?? _guessMimeType(source.name);
+      final mimeType = _guessMimeType(originalFileName);
       return 'data:$mimeType;base64,${base64Encode(bytes)}';
     }
 
     final dir = await _recipeDir(recipeId);
-    final fileExtension = extension(source.path);
+    final fileExtension = extension(originalFileName);
     final destinationPath = join(dir.path, '$imageId$fileExtension');
-    await File(source.path).copy(destinationPath);
+    await File(destinationPath).writeAsBytes(bytes);
     return join(_imagesDirName, recipeId, '$imageId$fileExtension');
+  }
+
+  /// Reads the raw bytes behind a stored `file_path` value, regardless of
+  /// whether it's a native file path or a web `data:` URL — used by
+  /// [BackupService] to bundle images into an export archive.
+  Future<Uint8List> readImageBytes(String relativePath) async {
+    if (relativePath.startsWith('data:')) {
+      final base64Data = relativePath.substring(relativePath.indexOf(',') + 1);
+      return base64Decode(base64Data);
+    }
+
+    final baseDir = await getApplicationDocumentsDirectory();
+    return File(join(baseDir.path, relativePath)).readAsBytes();
   }
 
   /// Resolves a stored `file_path` value to something an `Image` widget

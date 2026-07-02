@@ -21,6 +21,9 @@ dependencies:
   wakelock_plus: ^1.2.8
   sqflite_common_ffi_web: ^1.1.2
   shared_preferences: ^2.3.2
+  archive: ^4.0.9
+  file_picker: ^8.1.2
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

@@ -1,10 +1,21 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/backup/backup_service.dart';
+import '../../core/backup/browser_download.dart';
 import '../../design/app_colors.dart';
 import '../../design/app_spacing.dart';
 import '../../design/app_typography.dart';
 import '../../design/components/app_bottom_sheet.dart';
+import '../../providers/backup_service_provider.dart';
+import '../../providers/recipe_list_provider.dart';
+import '../../providers/shopping_list_provider.dart';
+import '../../providers/tag_list_provider.dart';
 import '../../providers/theme_mode_provider.dart';
 import 'widgets/settings_row.dart';
 
@@ -14,9 +25,7 @@ const _themeOptions = [
   (mode: ThemeMode.dark, label: 'Tamna', icon: Icons.dark_mode_outlined),
 ];
 
-/// App-level settings — the only non-recipe-content screen. Backup/
-/// Import/Export rows are presentational only (per product decision) —
-/// there is no import/export implementation behind them yet.
+/// App-level settings — the only non-recipe-content screen.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -51,26 +60,20 @@ class SettingsScreen extends ConsumerWidget {
               header: 'PODACI',
               rows: [
                 SettingsRow(
-                  icon: Icons.cloud_done_outlined,
+                  icon: Icons.file_upload_outlined,
                   iconBackground: context.colors.oliveSoft,
                   iconColor: context.colors.olive,
-                  label: 'Backup',
-                  trailingText: 'Uključen',
-                  onTap: () => _comingSoon(context),
+                  label: 'Export recepata',
+                  showChevron: false,
+                  onTap: () => _exportRecipes(context, ref),
                 ),
                 SettingsRow(
                   icon: Icons.file_download_outlined,
                   iconBackground: context.colors.oliveSoft,
                   iconColor: context.colors.olive,
                   label: 'Import recepata',
-                  onTap: () => _comingSoon(context),
-                ),
-                SettingsRow(
-                  icon: Icons.file_upload_outlined,
-                  iconBackground: context.colors.oliveSoft,
-                  iconColor: context.colors.olive,
-                  label: 'Export recepata',
-                  onTap: () => _comingSoon(context),
+                  showChevron: false,
+                  onTap: () => _importRecipes(context, ref),
                 ),
               ],
             ),
@@ -131,6 +134,127 @@ class SettingsScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  /// Builds the whole recipe collection (+ tags, images, shopping list) into
+  /// a single `.zip` and hands it to the user — a browser download on web,
+  /// a native save dialog otherwise. See [BackupService] for the format.
+  Future<void> _exportRecipes(BuildContext context, WidgetRef ref) async {
+    _showLoadingDialog(context, 'Izvoz recepata…');
+    try {
+      final bytes = await ref.read(backupServiceProvider).exportToZipBytes();
+      final fileName = 'kuharica-backup-${_dateStamp(DateTime.now())}.zip';
+
+      if (kIsWeb) {
+        triggerBrowserDownload(bytes, fileName);
+      } else {
+        await FilePicker.platform.saveFile(fileName: fileName, bytes: bytes);
+      }
+
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Backup spremljen ($fileName).')),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Izvoz nije uspio: $error')),
+      );
+    }
+  }
+
+  /// Lets the user pick a `.zip` backup file and restores everything in it
+  /// as new recipes/tags/shopping items — never overwrites what's already
+  /// in the app (see [BackupService] doc comment).
+  Future<void> _importRecipes(BuildContext context, WidgetRef ref) async {
+    final FilePickerResult? picked;
+    try {
+      picked = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['zip'],
+        withData: true,
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Odabir datoteke nije uspio: $error')),
+      );
+      return;
+    }
+    if (picked == null || picked.files.isEmpty) return; // user cancelled
+
+    final pickedFile = picked.files.single;
+    Uint8List? bytes = pickedFile.bytes;
+    if (bytes == null && pickedFile.path != null) {
+      bytes = await File(pickedFile.path!).readAsBytes();
+    }
+    if (bytes == null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Odabrana datoteka nije čitljiva.')),
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+    _showLoadingDialog(context, 'Uvoz recepata…');
+    try {
+      final result = await ref.read(backupServiceProvider).importFromZipBytes(bytes);
+
+      // Every repository the import touched needs its provider state
+      // refreshed — nothing in the app currently listens for DB writes
+      // that didn't go through the notifier that owns that state.
+      await ref.read(recipeListProvider.notifier).loadRecipes();
+      await ref.read(tagListProvider.notifier).loadTags();
+      await ref.read(shoppingListProvider.notifier).loadItems();
+
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Uvezeno ${result.recipeCount} ${result.recipeCount == 1 ? 'recept' : 'recepata'}'
+            '${result.shoppingItemCount > 0 ? ' i ${result.shoppingItemCount} stavki liste' : ''}.',
+          ),
+        ),
+      );
+    } on BackupFormatException catch (error) {
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Uvoz nije uspio: $error')),
+      );
+    }
+  }
+
+  void _showLoadingDialog(BuildContext context, String message) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Row(
+            children: [
+              const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5)),
+              const SizedBox(width: 20),
+              Expanded(child: Text(message, style: context.typography.sans(fontSize: 14))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _dateStamp(DateTime date) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${date.year}${two(date.month)}${two(date.day)}';
   }
 
   void _comingSoon(BuildContext context) {

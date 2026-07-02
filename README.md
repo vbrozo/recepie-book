@@ -46,11 +46,21 @@ Live demo (GitHub Pages, build iz `/docs`): `https://<user>.github.io/recepie-bo
   dokument direktoriju; na webu (gdje nema pravog datotečnog sustava) kao
   base64 `data:` URL izravno u bazi — isti stupac, bez promjene sheme
 
+### Backup / Export / Import
+- Postavke → Export recepata sprema cijelu zbirku (recepti, sastojci,
+  koraci, tagovi, slike, shopping lista) kao jedan `.zip` — browser
+  download na webu, save-dialog na nativnim platformama
+- Postavke → Import recepata učitava takav `.zip` natrag; uvijek dodaje
+  **nove** retke (svježi ID-evi za sve osim tagova, koji se spajaju po
+  nazivu) umjesto da išta prepiše — isto pravilo "nikad tiho ne prepisuj"
+  kao kod uređivanja recepta
+- Format je namjerno bez `recipe_versions` (bounded/disposable povijest,
+  ne primarni sadržaj) — vidi `lib/core/backup/backup_service.dart`
+
 ### Navigacija / UI
 - Trajni bottom tab bar (Home / Recepti / Shopping / Postavke) + plutajući
   "+" gumb za brzo dodavanje
 - Splash ekran, Home s "Nedavno dodano" i "Omiljeni" pregledom
-- Postavke (Backup/Import/Export su za sada samo UI redovi bez logike)
 - **Svijetla/tamna tema** (+ prati postavku sustava), birač u Postavke →
   Izgled → Tema; odabir se pamti preko `shared_preferences`
 - Dizajn sustav usklađen s Figma predloškom (Newsreader + Hanken Grotesque
@@ -164,8 +174,6 @@ flutter build web --release --base-href=/recepie-book/   # produkcijski build
 - Fontovi (Newsreader, Hanken Grotesque) se i dalje dohvaćaju s Google Fonts
   CDN-a u runtimeu (graciozno pada natrag na sistemski font ako CDN nije
   dostupan) — nisu lokalno vendirani kao CanvasKit/SQLite wasm.
-- Postavke → Backup/Import/Export su trenutno samo UI, bez implementirane
-  logike.
 - `flutter test` može pucati u nekim sandboxanim/offline build okruženjima
   zbog `sqlite3` paketovog native-asset build hooka (pokušava preuzeti
   host binarku) — ne utječe na `flutter build web`.
