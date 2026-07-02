@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../design/app_colors.dart';
+import '../../../design/app_typography.dart';
 import '../../../models/shopping_list_item.dart';
 
+/// Circular 24px checkbox row. Checked: olive fill + white check, text
+/// strikethrough + muted. Unchecked: 2px outline circle, normal ink text.
 class ShoppingListItemTile extends StatelessWidget {
   const ShoppingListItemTile({
     super.key,
@@ -21,20 +25,52 @@ class ShoppingListItemTile extends StatelessWidget {
       if (item.unit != null && item.unit!.trim().isNotEmpty) item.unit!.trim(),
     ].join(' ');
 
-    return CheckboxListTile(
-      value: item.isChecked,
-      onChanged: (_) => onToggle(),
-      controlAffinity: ListTileControlAffinity.leading,
-      title: Text(
-        item.name,
-        style: item.isChecked
-            ? const TextStyle(decoration: TextDecoration.lineThrough, color: Colors.grey)
-            : null,
+    final checked = item.isChecked;
+    final textColor = checked ? AppColors.mutedAlt : AppColors.ink;
+    final metaColor = checked ? AppColors.faintAlt : AppColors.muted;
+
+    return Dismissible(
+      key: ValueKey(item.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: AppColors.diffSoft,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: const Icon(Icons.delete_outline, color: AppColors.orangeDeep),
       ),
-      subtitle: quantityLabel.isEmpty ? null : Text(quantityLabel),
-      secondary: IconButton(
-        icon: const Icon(Icons.delete_outline),
-        onPressed: onDelete,
+      onDismissed: (_) => onDelete(),
+      child: InkWell(
+        onTap: onToggle,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: checked ? AppColors.olive : Colors.transparent,
+                  border: checked ? null : Border.all(color: const Color(0xFFD8CDB6), width: 2),
+                ),
+                child: checked ? const Icon(Icons.check, size: 15, color: Colors.white) : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item.name,
+                  style: AppTypography.sans(
+                    fontSize: 15,
+                    color: textColor,
+                    decoration: checked ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+              ),
+              if (quantityLabel.isNotEmpty)
+                Text(quantityLabel, style: AppTypography.sans(fontSize: 13, color: metaColor)),
+            ],
+          ),
+        ),
       ),
     );
   }

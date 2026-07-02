@@ -13,10 +13,22 @@ class RecipeImageThumbnail extends ConsumerWidget {
     super.key,
     required this.relativePath,
     this.size = 80,
-  });
+    double? width,
+    double? height,
+    this.radius = 8,
+    this.placeholderIcon = Icons.image_outlined,
+  })  : _width = width,
+        _height = height;
 
   final String relativePath;
   final double size;
+  final double? _width;
+  final double? _height;
+  final double radius;
+  final IconData placeholderIcon;
+
+  double get _w => _width ?? size;
+  double get _h => _height ?? size;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,11 +44,11 @@ class RecipeImageThumbnail extends ConsumerWidget {
 
         final file = File(path);
         return ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(radius),
           child: Image.file(
             file,
-            width: size,
-            height: size,
+            width: _w,
+            height: _h,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => _placeholder(),
           ),
@@ -47,13 +59,13 @@ class RecipeImageThumbnail extends ConsumerWidget {
 
   Widget _placeholder() {
     return Container(
-      width: size,
-      height: size,
+      width: _w,
+      height: _h,
       decoration: BoxDecoration(
         color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(radius),
       ),
-      child: const Icon(Icons.image_outlined),
+      child: Icon(placeholderIcon),
     );
   }
 }

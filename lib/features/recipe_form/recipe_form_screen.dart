@@ -4,6 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../design/app_colors.dart';
+import '../../design/app_typography.dart';
+import '../../design/components/ingredient_row.dart';
+import '../../design/components/primary_button.dart';
+import '../../design/components/tag_chip.dart';
 import '../../models/ingredient.dart';
 import '../../models/recipe.dart';
 import '../../models/recipe_image.dart';
@@ -12,6 +17,7 @@ import '../../models/recipe_with_details.dart';
 import '../../models/tag.dart';
 import '../../providers/image_storage_provider.dart';
 import '../../providers/recipe_list_provider.dart';
+import '../../providers/recipe_versions_provider.dart';
 import '../../providers/tag_list_provider.dart';
 import 'widgets/image_form_item.dart';
 import 'widgets/image_form_thumbnail.dart';
@@ -20,7 +26,12 @@ import 'widgets/step_form_row.dart';
 
 const _uuid = Uuid();
 
-/// Add/edit form for a recipe, its ingredients and its steps.
+/// Add/edit form for a recipe, its ingredients and its steps, as a 2-step
+/// wizard (Osnovni podaci → Sastojci & Postupak) matching the Figma flow.
+///
+/// Editing an existing recipe auto-saves the result as a new
+/// [RecipeVersion] on save (per product rule — edits never overwrite
+/// silently), which is why the footer banner shows "Spremi kao Verziju N".
 /// Pass [existing] to edit, or leave it null to create a new recipe.
 class RecipeFormScreen extends ConsumerStatefulWidget {
   const RecipeFormScreen({super.key, this.existing});
@@ -48,6 +59,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
 
   String? _primaryImageId;
   bool _isSaving = false;
+  int _currentStep = 0;
 
   bool get _isEditing => widget.existing != null;
 
@@ -194,9 +206,20 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
     setState(() => _selectedTags.removeWhere((selected) => selected.id == tag.id));
   }
 
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+  void _goNext() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _currentStep = 1);
+  }
 
+  void _goBack() {
+    if (_currentStep == 0) {
+      context.pop();
+    } else {
+      setState(() => _currentStep = 0);
+    }
+  }
+
+  Future<void> _save() async {
     final validIngredients =
         _ingredientRows.where((row) => row.nameController.text.trim().isNotEmpty).toList();
     final validSteps =
@@ -308,9 +331,24 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
         recipe: recipe,
         ingredients: ingredients,
         steps: steps,
+        images: images,
         tagIds: tagIds,
       );
     }
+
+    // Every save (create or edit) becomes a new version — saving an edit
+    // never silently overwrites the recipe's history.
+    final savedSnapshot = RecipeWithDetails(
+      recipe: recipe,
+      ingredients: ingredients,
+      steps: steps,
+      images: images,
+      tags: _selectedTags,
+    );
+    await ref.read(recipeVersionsProvider(recipeId).notifier).createVersion(
+          recipe: savedSnapshot,
+          note: _isEditing ? null : 'Prvi zapis recepta',
+        );
 
     if (!mounted) return;
     setState(() => _isSaving = false);
@@ -319,180 +357,389 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Uredi recept' : 'Novi recept')),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Naziv *'),
-              validator: (value) =>
-                  (value == null || value.trim().isEmpty) ? 'Naziv je obavezan' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Opis'),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _servingsController,
-                    decoration: const InputDecoration(labelText: 'Porcije'),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _prepController,
-                    decoration: const InputDecoration(labelText: 'Priprema (min)'),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _cookController,
-                    decoration: const InputDecoration(labelText: 'Kuhanje (min)'),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Text('Tagovi', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            if (_selectedTags.isNotEmpty)
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  for (final tag in _selectedTags)
-                    Chip(
-                      label: Text(tag.name),
-                      onDeleted: () => _removeTag(tag),
-                    ),
-                ],
-              ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _tagInputController,
-              decoration: InputDecoration(
-                labelText: 'Novi tag',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => _addTagByName(_tagInputController.text),
-                ),
-              ),
-              textInputAction: TextInputAction.done,
-              onSubmitted: _addTagByName,
-            ),
-            Consumer(
-              builder: (context, ref, _) {
-                final allTags = ref.watch(tagListProvider);
-                final available = allTags
-                    .where((tag) => !_selectedTags.any((selected) => selected.id == tag.id))
-                    .toList();
-                if (available.isEmpty) return const SizedBox.shrink();
+    final existingVersions =
+        _isEditing ? ref.watch(recipeVersionsProvider(widget.existing!.recipe.id)).versions : const [];
+    final nextVersionNumber = existingVersions.isEmpty ? 1 : existingVersions.first.versionNumber + 1;
 
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      for (final tag in available)
-                        ActionChip(
-                          label: Text(tag.name),
-                          onPressed: () => _addExistingTag(tag),
-                        ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Slike', style: Theme.of(context).textTheme.titleMedium),
-                IconButton(
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  onPressed: _pickImages,
-                ),
-              ],
-            ),
-            if (_imageItems.isNotEmpty)
-              SizedBox(
-                height: 96,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _imageItems.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) => ImageFormThumbnail(
-                    item: _imageItems[index],
-                    isPrimary: _imageItems[index].id == _primaryImageId,
-                    onSetPrimary: () => _setPrimaryImage(_imageItems[index].id),
-                    onRemove: () => _removeImageRow(index),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _Header(
+                title: _isEditing ? 'Uredi recept' : 'Novi recept',
+                onBack: _goBack,
+                onCancel: () => context.pop(),
+              ),
+              const SizedBox(height: 12),
+              _ProgressBar(currentStep: _currentStep),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _currentStep == 0 ? 'KORAK 1 OD 2 · OSNOVNI PODACI' : 'KORAK 2 OD 2 · SASTOJCI',
+                    style: AppTypography.eyebrow(),
                   ),
                 ),
               ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Sastojci', style: Theme.of(context).textTheme.titleMedium),
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline),
-                  onPressed: _addIngredientRow,
+              if (_isEditing) ...[
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _VersionBanner(nextVersionNumber: nextVersionNumber),
                 ),
               ],
-            ),
-            for (var i = 0; i < _ingredientRows.length; i++)
-              IngredientFormRowField(
-                row: _ingredientRows[i],
-                removeEnabled: _ingredientRows.length > 1,
-                onRemove: () => _removeIngredientRow(i),
-              ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Koraci', style: Theme.of(context).textTheme.titleMedium),
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline),
-                  onPressed: _addStepRow,
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                  children: _currentStep == 0 ? _buildStepOne(context) : _buildStepTwo(context),
                 ),
-              ],
-            ),
-            for (var i = 0; i < _stepRows.length; i++)
-              StepFormRowField(
-                index: i,
-                row: _stepRows[i],
-                removeEnabled: _stepRows.length > 1,
-                onRemove: () => _removeStepRow(i),
               ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _isSaving ? null : _save,
-              child: _isSaving
-                  ? const SizedBox(
-                      height: 16,
-                      width: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Spremi'),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: _currentStep == 0
+                    ? PrimaryButton(label: 'Dalje', onPressed: _goNext)
+                    : PrimaryButton(
+                        label: _isEditing ? 'Spremi kao Verziju $nextVersionNumber' : 'Spremi recept',
+                        icon: Icons.check,
+                        isLoading: _isSaving,
+                        onPressed: _isSaving ? null : _save,
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  List<Widget> _buildStepOne(BuildContext context) {
+    return [
+      Text('NASLOVNA SLIKA', style: AppTypography.eyebrow()),
+      const SizedBox(height: 8),
+      _HeroImagePicker(
+        imageItems: _imageItems,
+        primaryImageId: _primaryImageId,
+        onPick: _pickImages,
+        onSetPrimary: _setPrimaryImage,
+        onRemove: _removeImageRow,
+      ),
+      const SizedBox(height: 20),
+      Text('NAZIV RECEPTA', style: AppTypography.eyebrow()),
+      const SizedBox(height: 8),
+      TextFormField(
+        controller: _titleController,
+        decoration: const InputDecoration(hintText: 'npr. Njoki s kaduljom'),
+        validator: (value) => (value == null || value.trim().isEmpty) ? 'Naziv je obavezan' : null,
+      ),
+      const SizedBox(height: 20),
+      TextFormField(
+        controller: _descriptionController,
+        decoration: const InputDecoration(labelText: 'Opis'),
+        maxLines: 3,
+      ),
+      const SizedBox(height: 20),
+      Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('VRIJEME (MIN)', style: AppTypography.eyebrow()),
+                const SizedBox(height: 8),
+                TextFormField(controller: _prepController, keyboardType: TextInputType.number),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('PORCIJE', style: AppTypography.eyebrow()),
+                const SizedBox(height: 8),
+                TextFormField(controller: _servingsController, keyboardType: TextInputType.number),
+              ],
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('KUHANJE (MIN)', style: AppTypography.eyebrow()),
+          const SizedBox(height: 8),
+          TextFormField(controller: _cookController, keyboardType: TextInputType.number),
+        ],
+      ),
+      const SizedBox(height: 20),
+      Text('TAGOVI', style: AppTypography.eyebrow()),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final tag in _selectedTags)
+            TagChip(label: tag.name, variant: TagChipVariant.olive, onTap: () => _removeTag(tag)),
+          _AddTagChip(controller: _tagInputController, onSubmit: _addTagByName),
+        ],
+      ),
+      Consumer(
+        builder: (context, ref, _) {
+          final allTags = ref.watch(tagListProvider);
+          final available = allTags.where((tag) => !_selectedTags.any((s) => s.id == tag.id)).toList();
+          if (available.isEmpty) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final tag in available)
+                  TagChip(label: tag.name, variant: TagChipVariant.outline, onTap: () => _addExistingTag(tag)),
+              ],
+            ),
+          );
+        },
+      ),
+    ];
+  }
+
+  List<Widget> _buildStepTwo(BuildContext context) {
+    return [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('Sastojci', style: AppTypography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.orange), onPressed: _addIngredientRow),
+        ],
+      ),
+      for (var i = 0; i < _ingredientRows.length; i++)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: IngredientFormRowField(
+            row: _ingredientRows[i],
+            removeEnabled: _ingredientRows.length > 1,
+            onRemove: () => _removeIngredientRow(i),
+          ),
+        ),
+      AddIngredientRow(onTap: _addIngredientRow),
+      const SizedBox(height: 24),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('Postupak', style: AppTypography.sans(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.orange), onPressed: _addStepRow),
+        ],
+      ),
+      for (var i = 0; i < _stepRows.length; i++)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: StepFormRowField(
+            index: i,
+            row: _stepRows[i],
+            removeEnabled: _stepRows.length > 1,
+            onRemove: () => _removeStepRow(i),
+          ),
+        ),
+    ];
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({required this.title, required this.onBack, required this.onCancel});
+
+  final String title;
+  final VoidCallback onBack;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 20, 0),
+      child: Row(
+        children: [
+          IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack),
+          Expanded(
+            child: Text(title, textAlign: TextAlign.center, style: AppTypography.sans(fontSize: 16, fontWeight: FontWeight.w600)),
+          ),
+          TextButton(
+            onPressed: onCancel,
+            child: Text('Odustani', style: AppTypography.sans(color: AppColors.mutedAlt, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressBar extends StatelessWidget {
+  const _ProgressBar({required this.currentStep});
+
+  final int currentStep;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: List.generate(2, (i) {
+          return Expanded(
+            child: Container(
+              height: 5,
+              margin: EdgeInsets.only(right: i == 1 ? 0 : 6),
+              decoration: BoxDecoration(
+                color: i <= currentStep ? AppColors.orange : AppColors.hairline,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _VersionBanner extends StatelessWidget {
+  const _VersionBanner({required this.nextVersionNumber});
+
+  final int nextVersionNumber;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: AppColors.orangeSoft, borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: AppColors.orangeDeep, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Promjene se ne spremaju preko originala — nastat će Verzija $nextVersionNumber.',
+              style: AppTypography.sans(fontSize: 13, color: AppColors.orangeDeep),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddTagChip extends StatefulWidget {
+  const _AddTagChip({required this.controller, required this.onSubmit});
+
+  final TextEditingController controller;
+  final ValueChanged<String> onSubmit;
+
+  @override
+  State<_AddTagChip> createState() => _AddTagChipState();
+}
+
+class _AddTagChipState extends State<_AddTagChip> {
+  bool _editing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_editing) {
+      return GestureDetector(
+        onTap: () => setState(() => _editing = true),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(9999),
+            border: Border.all(color: AppColors.faintAlt),
+          ),
+          child: Text('+ dodaj', style: AppTypography.sans(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.muted)),
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: 140,
+      child: TextField(
+        controller: widget.controller,
+        autofocus: true,
+        style: AppTypography.sans(fontSize: 13),
+        decoration: const InputDecoration(isDense: true, hintText: 'Naziv taga'),
+        onSubmitted: (value) {
+          widget.onSubmit(value);
+          setState(() => _editing = false);
+        },
+        onTapOutside: (_) {
+          if (widget.controller.text.trim().isNotEmpty) widget.onSubmit(widget.controller.text);
+          setState(() => _editing = false);
+        },
+      ),
+    );
+  }
+}
+
+class _HeroImagePicker extends StatelessWidget {
+  const _HeroImagePicker({
+    required this.imageItems,
+    required this.primaryImageId,
+    required this.onPick,
+    required this.onSetPrimary,
+    required this.onRemove,
+  });
+
+  final List<ImageFormItem> imageItems;
+  final String? primaryImageId;
+  final VoidCallback onPick;
+  final ValueChanged<String> onSetPrimary;
+  final ValueChanged<int> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: onPick,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            height: 164,
+            width: double.infinity,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.faintAlt),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.add_photo_alternate_outlined, color: AppColors.muted, size: 28),
+                const SizedBox(height: 8),
+                Text('+ Dodaj naslovnu sliku', style: AppTypography.sans(color: AppColors.muted, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ),
+        if (imageItems.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 88,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: imageItems.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) => ImageFormThumbnail(
+                item: imageItems[index],
+                isPrimary: imageItems[index].id == primaryImageId,
+                onSetPrimary: () => onSetPrimary(imageItems[index].id),
+                onRemove: () => onRemove(index),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
