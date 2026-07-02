@@ -69,10 +69,10 @@ vidi `ARCHITECTURE.md` §5).
 | id          | TEXT    | PRIMARY KEY                                          |
 | recipe_id   | TEXT    | NOT NULL, FK → recipes(id) ON DELETE CASCADE          |
 | file_path   | TEXT    | NOT NULL (relativna putanja)                         |
-| is_cover    | INTEGER | NOT NULL DEFAULT 0 (0/1)                              |
+| is_primary  | INTEGER | NOT NULL DEFAULT 0 (0/1)                              |
 | sort_order  | INTEGER | NOT NULL DEFAULT 0                                   |
 | created_at  | TEXT    | NOT NULL                                             |
-| updated_at  | TEXT    | NOT NULL (mijenja se npr. is_cover/sort_order)        |
+| updated_at  | TEXT    | NOT NULL (mijenja se npr. is_primary/sort_order)      |
 
 Indeksi: `recipe_id`.
 

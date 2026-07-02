@@ -42,7 +42,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
   final List<StepFormRow> _stepRows = [];
   final List<ImageFormItem> _imageItems = [];
 
-  String? _coverImageId;
+  String? _primaryImageId;
   bool _isSaving = false;
 
   bool get _isEditing => widget.existing != null;
@@ -88,12 +88,12 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
     final existingImages = widget.existing?.images ?? const [];
     for (final image in existingImages) {
       _imageItems.add(ImageFormItem.existing(id: image.id, relativePath: image.filePath));
-      if (image.isCover) {
-        _coverImageId = image.id;
+      if (image.isPrimary) {
+        _primaryImageId = image.id;
       }
     }
-    if (_coverImageId == null && _imageItems.isNotEmpty) {
-      _coverImageId = _imageItems.first.id;
+    if (_primaryImageId == null && _imageItems.isNotEmpty) {
+      _primaryImageId = _imageItems.first.id;
     }
   }
 
@@ -143,7 +143,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       for (final file in files) {
         final item = ImageFormItem.picked(id: _uuid.v4(), file: file);
         _imageItems.add(item);
-        _coverImageId ??= item.id;
+        _primaryImageId ??= item.id;
       }
     });
   }
@@ -151,14 +151,14 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
   void _removeImageRow(int index) {
     setState(() {
       final removed = _imageItems.removeAt(index);
-      if (_coverImageId == removed.id) {
-        _coverImageId = _imageItems.isNotEmpty ? _imageItems.first.id : null;
+      if (_primaryImageId == removed.id) {
+        _primaryImageId = _imageItems.isNotEmpty ? _imageItems.first.id : null;
       }
     });
   }
 
-  void _setCoverImage(String id) {
-    setState(() => _coverImageId = id);
+  void _setPrimaryImage(String id) {
+    setState(() => _primaryImageId = id);
   }
 
   Future<void> _save() async {
@@ -240,7 +240,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
         id: item.id,
         recipeId: recipeId,
         filePath: relativePath,
-        isCover: item.id == _coverImageId,
+        isPrimary: item.id == _primaryImageId,
         sortOrder: i,
         createdAt: now,
         updatedAt: now,
@@ -355,8 +355,8 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
                   separatorBuilder: (context, index) => const SizedBox(width: 12),
                   itemBuilder: (context, index) => ImageFormThumbnail(
                     item: _imageItems[index],
-                    isCover: _imageItems[index].id == _coverImageId,
-                    onSetCover: () => _setCoverImage(_imageItems[index].id),
+                    isPrimary: _imageItems[index].id == _primaryImageId,
+                    onSetPrimary: () => _setPrimaryImage(_imageItems[index].id),
                     onRemove: () => _removeImageRow(index),
                   ),
                 ),

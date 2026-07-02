@@ -9,14 +9,14 @@ class ImageFormThumbnail extends StatelessWidget {
   const ImageFormThumbnail({
     super.key,
     required this.item,
-    required this.isCover,
-    required this.onSetCover,
+    required this.isPrimary,
+    required this.onSetPrimary,
     required this.onRemove,
   });
 
   final ImageFormItem item;
-  final bool isCover;
-  final VoidCallback onSetCover;
+  final bool isPrimary;
+  final VoidCallback onSetPrimary;
   final VoidCallback onRemove;
 
   static const double _size = 88;
@@ -27,12 +27,12 @@ class ImageFormThumbnail extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         GestureDetector(
-          onTap: onSetCover,
+          onTap: onSetPrimary,
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isCover ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                color: isPrimary ? Theme.of(context).colorScheme.primary : Colors.transparent,
                 width: 3,
               ),
             ),
@@ -59,7 +59,7 @@ class ImageFormThumbnail extends StatelessWidget {
             onPressed: onRemove,
           ),
         ),
-        if (isCover)
+        if (isPrimary)
           Positioned(
             bottom: 4,
             left: 4,

@@ -46,7 +46,7 @@ const List<String> migrationV1 = [
       id          TEXT PRIMARY KEY,
       recipe_id   TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
       file_path   TEXT NOT NULL,
-      is_cover    INTEGER NOT NULL DEFAULT 0,
+      is_primary  INTEGER NOT NULL DEFAULT 0,
       sort_order  INTEGER NOT NULL DEFAULT 0,
       created_at  TEXT NOT NULL,
       updated_at  TEXT NOT NULL
