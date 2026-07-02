@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -40,11 +40,19 @@ class ImageFormThumbnail extends StatelessWidget {
                 ? RecipeImageThumbnail(relativePath: item.existingRelativePath!, size: _size)
                 : ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(item.pickedFile!.path),
-                      width: _size,
-                      height: _size,
-                      fit: BoxFit.cover,
+                    // Reads bytes via XFile.readAsBytes() (cross-platform —
+                    // unlike a raw File(xfile.path), this also works on web
+                    // where the path is a blob: URL, not a real filesystem
+                    // path) and renders with Image.memory.
+                    child: FutureBuilder<Uint8List>(
+                      future: item.pickedFile!.readAsBytes(),
+                      builder: (context, snapshot) {
+                        final bytes = snapshot.data;
+                        if (bytes == null) {
+                          return const SizedBox(width: _size, height: _size);
+                        }
+                        return Image.memory(bytes, width: _size, height: _size, fit: BoxFit.cover);
+                      },
                     ),
                   ),
           ),

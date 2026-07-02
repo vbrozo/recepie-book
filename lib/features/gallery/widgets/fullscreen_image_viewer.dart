@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,15 +36,15 @@ class _FullscreenImageViewerState extends ConsumerState<FullscreenImageViewer> {
             controller: _controller,
             itemCount: widget.relativePaths.length,
             itemBuilder: (context, index) {
-              return FutureBuilder<String>(
-                future: imageStorage.absolutePath(widget.relativePaths[index]),
+              return FutureBuilder<ImageProvider>(
+                future: imageStorage.resolveProvider(widget.relativePaths[index]),
                 builder: (context, snapshot) {
-                  final path = snapshot.data;
-                  if (path == null) return const SizedBox.shrink();
+                  final provider = snapshot.data;
+                  if (provider == null) return const SizedBox.shrink();
                   return InteractiveViewer(
                     minScale: 1,
                     maxScale: 4,
-                    child: Center(child: Image.file(File(path))),
+                    child: Center(child: Image(image: provider)),
                   );
                 },
               );

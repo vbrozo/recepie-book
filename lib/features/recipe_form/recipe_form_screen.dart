@@ -290,7 +290,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
           await imageStorage.saveImage(
             recipeId: recipeId,
             imageId: item.id,
-            sourcePath: item.pickedFile!.path,
+            source: item.pickedFile!,
           );
       images.add(RecipeImage(
         id: item.id,

@@ -1,13 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/image_storage_provider.dart';
 
-/// Resolves a `recipe_images.file_path` (relative, as stored in the DB) to
-/// an absolute file and renders it. Falls back to a placeholder icon while
-/// resolving or if the file is missing.
+/// Resolves a `recipe_images.file_path` (relative path on native, `data:`
+/// URL on web — see ImageStorageService) to a renderable [ImageProvider].
+/// Falls back to a placeholder icon while resolving or if the image is
+/// missing/corrupt.
 class RecipeImageThumbnail extends ConsumerWidget {
   const RecipeImageThumbnail({
     super.key,
@@ -34,19 +33,18 @@ class RecipeImageThumbnail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final imageStorage = ref.watch(imageStorageServiceProvider);
 
-    return FutureBuilder<String>(
-      future: imageStorage.absolutePath(relativePath),
+    return FutureBuilder<ImageProvider>(
+      future: imageStorage.resolveProvider(relativePath),
       builder: (context, snapshot) {
-        final path = snapshot.data;
-        if (path == null) {
+        final provider = snapshot.data;
+        if (provider == null) {
           return _placeholder();
         }
 
-        final file = File(path);
         return ClipRRect(
           borderRadius: BorderRadius.circular(radius),
-          child: Image.file(
-            file,
+          child: Image(
+            image: provider,
             width: _w,
             height: _h,
             fit: BoxFit.cover,
