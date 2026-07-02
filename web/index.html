@@ -34,9 +34,12 @@
 </head>
 <body>
   <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+    web/flutter_bootstrap.js is a custom copy of the generated one (not
+    auto-overwritten by `flutter build web`) with canvasKitBaseUrl pointed
+    at the locally-bundled canvaskit/ folder instead of Google's CDN, so
+    the app doesn't depend on an external host once it's been loaded once.
+    Needs re-copying (see the build docs) if the Flutter SDK version ever
+    changes engineRevision.
 
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization

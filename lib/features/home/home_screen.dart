@@ -48,14 +48,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         bottom: false,
         child: state.isLoading && state.recipes.isEmpty
             ? const Center(child: CircularProgressIndicator())
-            : state.recipes.isEmpty
+            : state.errorMessage != null && state.recipes.isEmpty
                 ? EmptyState(
-                    icon: Icons.restaurant_menu,
-                    message: 'Nema recepata još.\nDodaj svoj prvi recept!',
-                    ctaLabel: 'Dodaj recept',
-                    onCtaTap: () => context.push('/recipe/new'),
+                    icon: Icons.error_outline,
+                    message: 'Recepti se nisu mogli učitati.\n${state.errorMessage}',
+                    ctaLabel: 'Pokušaj ponovno',
+                    onCtaTap: () => ref.read(recipeListProvider.notifier).loadRecipes(),
                   )
-                : ListView(
+                : state.recipes.isEmpty
+                    ? EmptyState(
+                        icon: Icons.restaurant_menu,
+                        message: 'Nema recepata još.\nDodaj svoj prvi recept!',
+                        ctaLabel: 'Dodaj recept',
+                        onCtaTap: () => context.push('/recipe/new'),
+                      )
+                    : ListView(
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.screenPadding,
                       16,

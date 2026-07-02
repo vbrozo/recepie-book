@@ -336,6 +336,21 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       );
     }
 
+    // createRecipe/updateRecipe swallow repository errors into
+    // state.errorMessage instead of throwing (so a failed save doesn't
+    // crash the widget tree) — check for one here, otherwise a DB failure
+    // would silently look like a successful save: the form would close as
+    // if nothing happened while the recipe never actually got persisted.
+    final saveError = ref.read(recipeListProvider).errorMessage;
+    if (saveError != null) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Recept nije spremljen: $saveError')),
+      );
+      return;
+    }
+
     // Every save (create or edit) becomes a new version — saving an edit
     // never silently overwrites the recipe's history.
     final savedSnapshot = RecipeWithDetails(
