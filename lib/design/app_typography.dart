@@ -31,13 +31,15 @@ class AppTypography {
     Color color = AppColors.inkSecondary,
     double? height,
     double? letterSpacing,
+    TextDecoration? decoration,
   }) {
-    return GoogleFonts.hankenGrotesque(
+    return GoogleFonts.hankenGrotesk(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
       height: height,
       letterSpacing: letterSpacing,
+      decoration: decoration,
     );
   }
 
