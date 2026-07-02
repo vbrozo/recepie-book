@@ -107,7 +107,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: context.colors.background,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                     ),
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 140),
