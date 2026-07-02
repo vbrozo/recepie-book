@@ -57,6 +57,12 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
   final List<Tag> _selectedTags = [];
   final _tagInputController = TextEditingController();
 
+  /// What changed in this edit ("više soli, manje brašna") — shown on the
+  /// version's timeline card afterward. Only used when editing (see
+  /// [_isEditing]); a brand-new recipe's first version gets a fixed note
+  /// instead (see [_save]).
+  final _versionNoteController = TextEditingController();
+
   String? _primaryImageId;
   bool _isSaving = false;
   int _currentStep = 0;
@@ -129,6 +135,7 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       row.dispose();
     }
     _tagInputController.dispose();
+    _versionNoteController.dispose();
     super.dispose();
   }
 
@@ -394,9 +401,10 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
       images: images,
       tags: _selectedTags,
     );
+    final versionNote = _versionNoteController.text.trim();
     await ref.read(recipeVersionsProvider(recipeId).notifier).createVersion(
           recipe: savedSnapshot,
-          note: _isEditing ? null : 'Prvi zapis recepta',
+          note: _isEditing ? (versionNote.isEmpty ? null : versionNote) : 'Prvi zapis recepta',
         );
 
     if (!mounted) return;
@@ -596,6 +604,16 @@ class _RecipeFormScreenState extends ConsumerState<RecipeFormScreen> {
             onRemove: () => _removeStepRow(i),
           ),
         ),
+      if (_isEditing) ...[
+        const SizedBox(height: 24),
+        Text('BILJEŠKA UZ VERZIJU', style: context.typography.eyebrow()),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _versionNoteController,
+          maxLines: 2,
+          decoration: const InputDecoration(hintText: 'npr. više soli, manje brašna (opcionalno)'),
+        ),
+      ],
     ];
   }
 }

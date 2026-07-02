@@ -146,7 +146,16 @@ class RecipeVersionsScreen extends ConsumerWidget {
   }
 
   Future<void> _saveVersion(BuildContext context, WidgetRef ref, RecipeWithDetails current) async {
-    await ref.read(recipeVersionsProvider(current.recipe.id).notifier).createVersion(recipe: current);
+    final note = await showDialog<String>(
+      context: context,
+      builder: (context) => const _VersionNoteDialog(),
+    );
+    if (note == null) return; // dismissed/cancelled — don't save anything
+
+    await ref.read(recipeVersionsProvider(current.recipe.id).notifier).createVersion(
+          recipe: current,
+          note: note.trim().isEmpty ? null : note.trim(),
+        );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verzija spremljena.')));
     }
@@ -198,5 +207,50 @@ class RecipeVersionsScreen extends ConsumerWidget {
         SnackBar(content: Text('Recept vraćen na verziju v${version.versionNumber}.')),
       );
     }
+  }
+}
+
+/// Prompts for an optional free-text note ("više soli, manje brašna") before
+/// manually snapshotting the current recipe state. Pops `null` if
+/// cancelled/dismissed (caller aborts the save), or the entered text
+/// (possibly empty — that's a valid "no note") if confirmed.
+class _VersionNoteDialog extends StatefulWidget {
+  const _VersionNoteDialog();
+
+  @override
+  State<_VersionNoteDialog> createState() => _VersionNoteDialogState();
+}
+
+class _VersionNoteDialogState extends State<_VersionNoteDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Bilješka uz verziju', style: context.typography.serif(fontSize: 20)),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLines: 3,
+        decoration: const InputDecoration(hintText: 'npr. više soli, manje brašna (opcionalno)'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Odustani', style: context.typography.sans(fontWeight: FontWeight.w600, color: context.colors.muted)),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text),
+          style: FilledButton.styleFrom(backgroundColor: context.colors.orange),
+          child: const Text('Spremi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        ),
+      ],
+    );
   }
 }
