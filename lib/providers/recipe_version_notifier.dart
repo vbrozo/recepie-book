@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/recipe_version.dart';
 import '../models/recipe_with_details.dart';
 import '../repositories/recipe_version_repository.dart';
 import 'recipe_version_state.dart';
@@ -22,12 +23,18 @@ class RecipeVersionNotifier extends StateNotifier<RecipeVersionState> {
     }
   }
 
-  Future<void> createVersion({required RecipeWithDetails recipe, String? note}) async {
+  /// Returns the created [RecipeVersion], or `null` if the repository
+  /// decided there was nothing worth versioning (unchanged content, no
+  /// note — see [RecipeVersionRepository.createVersion]) or the write
+  /// failed (in which case [RecipeVersionState.errorMessage] is set).
+  Future<RecipeVersion?> createVersion({required RecipeWithDetails recipe, String? note}) async {
     try {
-      await _repository.createVersion(recipe: recipe, note: note);
+      final version = await _repository.createVersion(recipe: recipe, note: note);
       await loadVersions();
+      return version;
     } catch (error) {
       state = state.copyWith(errorMessage: error.toString());
+      return null;
     }
   }
 }

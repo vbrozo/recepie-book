@@ -16,6 +16,7 @@ class VersionCard extends StatelessWidget {
     this.note,
     this.addedChips = const [],
     this.removedChips = const [],
+    this.changedChips = const [],
     this.onTap,
   });
 
@@ -25,6 +26,10 @@ class VersionCard extends StatelessWidget {
   final String? note;
   final List<String> addedChips;
   final List<String> removedChips;
+
+  /// Ingredients present in both this version and the previous one, but
+  /// with a different quantity/unit — e.g. `"Sol: 1 žličica → 2 žličice"`.
+  final List<String> changedChips;
   final VoidCallback? onTap;
 
   @override
@@ -61,13 +66,14 @@ class VersionCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(note!, style: context.typography.sans(fontSize: 13, color: context.colors.inkSecondary)),
             ],
-            if (addedChips.isNotEmpty || removedChips.isNotEmpty) ...[
+            if (addedChips.isNotEmpty || removedChips.isNotEmpty || changedChips.isNotEmpty) ...[
               const SizedBox(height: 10),
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
                 children: [
                   for (final label in addedChips) TagChip(label: '+ $label', variant: TagChipVariant.diffAdded),
+                  for (final label in changedChips) TagChip(label: '~ $label', variant: TagChipVariant.diffChanged),
                   for (final label in removedChips) TagChip(label: '− $label', variant: TagChipVariant.diffRemoved),
                 ],
               ),

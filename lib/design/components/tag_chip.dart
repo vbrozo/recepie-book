@@ -4,11 +4,11 @@ import '../app_colors.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
 
-enum TagChipVariant { olive, orange, diffAdded, diffRemoved, outline }
+enum TagChipVariant { olive, orange, diffAdded, diffRemoved, diffChanged, outline }
 
 /// Pill chip. Olive = category/existing tag, orange = selected/active/diff,
-/// diffAdded/diffRemoved = version-diff summaries, outline = unselected
-/// filter chip.
+/// diffAdded/diffRemoved/diffChanged = version-diff summaries, outline =
+/// unselected filter chip.
 class TagChip extends StatelessWidget {
   const TagChip({
     super.key,
@@ -63,6 +63,8 @@ class TagChip extends StatelessWidget {
         return (context.colors.oliveSoft, context.colors.olive);
       case TagChipVariant.diffRemoved:
         return (context.colors.diffSoft, context.colors.diffText);
+      case TagChipVariant.diffChanged:
+        return (context.colors.orangeSoftAlt, context.colors.orangeDeep);
       case TagChipVariant.outline:
         return selected ? (context.colors.orange, Colors.white) : (Colors.transparent, context.colors.ink);
     }

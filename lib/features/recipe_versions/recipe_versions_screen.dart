@@ -116,6 +116,7 @@ class RecipeVersionsScreen extends ConsumerWidget {
                                           : version.note,
                                   addedChips: diff.added,
                                   removedChips: diff.removed,
+                                  changedChips: diff.changed,
                                   onTap: isActive || current == null
                                       ? null
                                       : () => _restore(context, ref, version, current!),
@@ -152,13 +153,18 @@ class RecipeVersionsScreen extends ConsumerWidget {
     );
     if (note == null) return; // dismissed/cancelled — don't save anything
 
-    await ref.read(recipeVersionsProvider(current.recipe.id).notifier).createVersion(
+    final saved = await ref.read(recipeVersionsProvider(current.recipe.id).notifier).createVersion(
           recipe: current,
           note: note.trim().isEmpty ? null : note.trim(),
         );
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verzija spremljena.')));
-    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          saved != null ? 'Verzija spremljena.' : 'Recept se nije promijenio od zadnje verzije — ništa nije spremljeno.',
+        ),
+      ),
+    );
   }
 
   Future<void> _restore(
@@ -179,6 +185,7 @@ class RecipeVersionsScreen extends ConsumerWidget {
     final recipeId = current.recipe.id;
     final versionsNotifier = ref.read(recipeVersionsProvider(recipeId).notifier);
 
+    // Back up what's about to be overwritten...
     await versionsNotifier.createVersion(
       recipe: current,
       note: 'Automatski spremljeno prije vraćanja na v${version.versionNumber}',
@@ -191,16 +198,33 @@ class RecipeVersionsScreen extends ConsumerWidget {
       createdAt: current.recipe.createdAt,
       updatedAt: DateTime.now(),
     );
+    final restoredIngredients = snapshot.ingredients.map((i) => i.copyWith(recipeId: recipeId)).toList();
+    final restoredSteps = snapshot.steps.map((s) => s.copyWith(recipeId: recipeId)).toList();
 
     await ref.read(recipeListProvider.notifier).updateRecipe(
           recipe: restoredRecipe,
-          ingredients: snapshot.ingredients.map((i) => i.copyWith(recipeId: recipeId)).toList(),
-          steps: snapshot.steps.map((s) => s.copyWith(recipeId: recipeId)).toList(),
+          ingredients: restoredIngredients,
+          steps: restoredSteps,
           images: current.images,
           tagIds: snapshot.tagIds,
         );
 
-    await versionsNotifier.loadVersions();
+    // ...then record the restored state itself as its own version, so the
+    // newest ("Aktivna") entry in the timeline actually matches what the
+    // recipe contains now. Skipping this would leave the timeline's most
+    // recent snapshot describing the state from *before* the restore —
+    // technically correct history, but confusingly out of sync with the
+    // live recipe until the next edit.
+    await versionsNotifier.createVersion(
+      recipe: RecipeWithDetails(
+        recipe: restoredRecipe,
+        ingredients: restoredIngredients,
+        steps: restoredSteps,
+        images: current.images,
+        tags: snapshot.tags,
+      ),
+      note: 'Vraćeno na verziju v${version.versionNumber}',
+    );
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
